@@ -1,62 +1,21 @@
 import supabase from "@/lib/supabase";
-import { Profile } from "@/types/tables.types";
-import { useState } from "react";
-import { View } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
 
 export default function Index() {
-  const [Login, setLogin] = useState<false | Profile>(false);
-  const [isLogging, setIslogging] = useState(false);
+  const router = useRouter();
 
-  const logIn = async () => {
-    setIslogging(true)
-    const res = await supabase.auth.signInWithPassword({
-      email: "aberger2611@gmail.com",
-      password: "2611Amitbe",
-    });
-    if (!res.error) {
-      const profileRes = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", res.data.user.id);
-      setLogin(profileRes.data?.[0] || false);
-    }
-    setIslogging(false)
-  };
+  useEffect(() => {
+    const handleEntry = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user.id) {
+        await supabase.auth.signOut();
+      }
+      router.navigate("/(auth)/login");
+    };
 
-  const logOut = async () => {
-    const res = await supabase.auth.signOut();
-    if (!res.error) {
-      setLogin(false);
-    }
-  };
+    handleEntry();
+  }, [router]);
 
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      {Login && (
-        <>
-          <Text>role: {Login.role}</Text>
-          <Text>name: {Login.display_name}</Text>
-        </>
-      )}
-      <Button dark={true} mode="contained" onPress={logIn} uppercase loading={isLogging}>
-        login as amit
-      </Button>
-      <Button
-        dark={true}
-        mode="contained"
-        onPress={logOut}
-        disabled={!Login}
-        uppercase
-      >
-        logout
-      </Button>
-    </View>
-  );
+  return null;
 }

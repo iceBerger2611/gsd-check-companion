@@ -1,21 +1,24 @@
 import supabase from "@/lib/supabase";
+import { Profile } from "@/types/tables.types";
+import { Session, User } from "@supabase/supabase-js";
+import { identifySupabaseError } from "./utils";
 
-export const Register = async (email: string, password: string) => {
-  try {
-    const {
-      data: { session, user },
-    } = await supabase.auth.signUp({ email, password });
-    return { session, user };
-  } catch (error) {}
-};
+interface AuthInRes {
+  session: Session | null;
+  user: User | null;
+  profile: Profile | null;
+}
 
-export const LogIn = async (email: string, password: string) => {
-  try {
-    const {
-      data: { session, user },
-    } = await supabase.auth.signInWithPassword({ email, password });
-    return { session, user };
-  } catch (error) {}
+const handleCatch = (error: unknown) => {
+  const res = identifySupabaseError(error);
+  const returnedError = Object.assign(
+    new Error(res?.message || "Unknown Error"),
+    {
+      status: res?.status || 500,
+    },
+  );
+
+  return returnedError as Error;
 };
 
 export const GetUserProfile = async (userId: string) => {
@@ -26,7 +29,66 @@ export const GetUserProfile = async (userId: string) => {
       .eq("id", userId)
       .single();
     return data;
-  } catch (error) {}
+  } catch (error) {
+    return handleCatch(error);
+  }
+};
+
+export const Register = async (email: string, password: string) => {
+  try {
+    const res: AuthInRes = {
+      profile: null,
+      session: null,
+      user: null,
+    };
+
+    const {
+      data: { session, user },
+    } = await supabase.auth.signUp({ email, password, options: {  } });
+
+    res.session = session;
+    res.user = user;
+
+    if (user) {
+      const profile = await GetUserProfile(user.id);
+      if (profile instanceof Error) throw profile;
+      res.profile = profile;
+    }
+
+    return res;
+  } catch (error) {
+    return handleCatch(error);
+  }
+};
+
+export const LogIn = async (
+  email: string,
+  password: string,
+): Promise<AuthInRes | Error> => {
+  try {
+    const res: AuthInRes = {
+      profile: null,
+      session: null,
+      user: null,
+    };
+
+    const {
+      data: { session, user },
+    } = await supabase.auth.signInWithPassword({ email, password });
+
+    res.session = session;
+    res.user = user;
+
+    if (user) {
+      const profile = await GetUserProfile(user.id);
+      if (profile instanceof Error) throw profile;
+      res.profile = profile;
+    }
+
+    return res;
+  } catch (error) {
+    return handleCatch(error);
+  }
 };
 
 export const LinkSupervisorToPatient = async (
@@ -38,7 +100,9 @@ export const LinkSupervisorToPatient = async (
       .from("care_links")
       .insert({ patient_id, supervisor_id, status: "active" });
     return status;
-  } catch (error) {}
+  } catch (error) {
+    return handleCatch(error);
+  }
 };
 
 export const InsertNewReading = async (
@@ -57,5 +121,22 @@ export const InsertNewReading = async (
       unit,
     });
     return status;
-  } catch (error) {}
+  } catch (error) {
+    return handleCatch(error);
+  }
+};
+
+export const updateProfileRole = async (
+  id: string,
+  role: "patient" | "supervisor",
+) => {
+  try {
+    const { status } = await supabase
+      .from("profiles")
+      .update({ role })
+      .eq("id", id);
+    return status;
+  } catch (error) {
+    return handleCatch(error);
+  }
 };
