@@ -1,7 +1,6 @@
 import { LogIn } from "@/db/operations";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-//import toast from "react-hot-toast";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
@@ -14,31 +13,40 @@ const LoginPage = () => {
   const router = useRouter();
 
   const onLogIn = async () => {
-    setIsLoggingIn(true);
     if (!email || !email.trim() || !password || !password?.trim()) {
       Toast.show({
         type: "error",
         text1: "invalid email and / or password",
       });
-      setIsLoggingIn(false);
       return;
     }
     setIsLoggingIn(true);
     const res = await LogIn(email, password);
+    setIsLoggingIn(false);
     if (res instanceof Error) {
       Toast.show({
         type: "error",
         text1: res.message,
       });
-      setIsLoggingIn(false);
+      return;
+    }
+    const { profile, session, user } = res;
+    if (!profile || !session || !user) {
+      Toast.show({
+        type: "error",
+        text1: "Unknown Error",
+      });
       return;
     }
     Toast.show({
       type: "success",
-      text1: `Hi ${res.profile?.display_name || "friend"}, You are Logged In!`,
+      text1: `Hi ${profile.display_name || "friend"}, You are Logged In!`,
     });
-    setIsLoggingIn(false);
-    router.navigate("/(patient)");
+    if (profile.role === 'patient') {
+      router.navigate(`/(patient)?id=${profile.id}`)
+    } else {
+      router.navigate(`/(supervisor)/dashboard?id=${profile.id}`)
+    }
   };
 
   return (

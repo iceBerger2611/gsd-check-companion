@@ -5,7 +5,7 @@ import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 import { Button, RadioButton, Text, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const [email, setEmail] = useState<null | string>(null);
   const [password, setPassword] = useState<null | string>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -14,13 +14,11 @@ const LoginPage = () => {
   const router = useRouter();
 
   const onSignUp = async () => {
-    setIsSigningIn(true);
     if (!email || !email.trim() || !password || !password?.trim()) {
       Toast.show({
         type: "error",
         text1: "invalid email and / or password",
       });
-      setIsSigningIn(false);
       return;
     }
     setIsSigningIn(true);
@@ -42,20 +40,23 @@ const LoginPage = () => {
       return;
     }
     const updateRes = await updateProfileRole(registerRes.profile.id, role);
+    setIsSigningIn(false);
     if (updateRes instanceof Error) {
       Toast.show({
         type: "error",
         text1: updateRes.message,
       });
-      setIsSigningIn(false);
       return;
     }
     Toast.show({
       type: "success",
       text1: `Hi ${registerRes.profile?.display_name || "friend"}, You Have Registered!`,
     });
-    setIsSigningIn(false);
-    router.navigate("/(patient)");
+    if (role === 'patient') {
+      router.navigate(`/(patient)?id=${registerRes.profile.id}`)
+    } else {
+      router.navigate(`/(supervisor)/dashboard?id=${registerRes.profile.id}`)
+    }
   };
 
   return (
@@ -141,4 +142,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

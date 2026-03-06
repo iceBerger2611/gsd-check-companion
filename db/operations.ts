@@ -44,7 +44,7 @@ export const Register = async (email: string, password: string) => {
 
     const {
       data: { session, user },
-    } = await supabase.auth.signUp({ email, password, options: {  } });
+    } = await supabase.auth.signUp({ email, password, options: {} });
 
     res.session = session;
     res.user = user;
@@ -100,6 +100,24 @@ export const LinkSupervisorToPatient = async (
       .from("care_links")
       .insert({ patient_id, supervisor_id, status: "active" });
     return status;
+  } catch (error) {
+    return handleCatch(error);
+  }
+};
+
+export const GetPatientOfSupervisor = async (supervisorId: string) => {
+  try {
+    const { data } = await supabase
+      .from("care_links")
+      .select("patient_id")
+      .eq("supervisor_id", supervisorId)
+      .single();
+
+    if (data?.patient_id) {
+      const res = await GetUserProfile(data.patient_id);
+      return res;
+    }
+    return null;
   } catch (error) {
     return handleCatch(error);
   }

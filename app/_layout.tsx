@@ -1,15 +1,20 @@
+import { initLocalDB } from "@/db/init";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 
 export default function RootLayout() {
+  useEffect(() => {
+    initLocalDB();
+  }, []);
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(patient)" options={{ headerShown: false }} />
-        <Stack.Screen name="(supervisor)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(patient)" />
+        <Stack.Screen name="(supervisor)" />
       </Stack>
-      <Toast position="bottom"/>
+      <Toast position="bottom" />
     </>
   );
 }

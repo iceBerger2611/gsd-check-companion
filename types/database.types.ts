@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       care_links: {
@@ -113,6 +88,63 @@ export type Database = {
           },
         ]
       }
+      followups: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          due_at: string
+          id: string
+          patient_id: string
+          photo_path: string | null
+          photo_url: string | null
+          reading_id: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          due_at: string
+          id?: string
+          patient_id: string
+          photo_path?: string | null
+          photo_url?: string | null
+          reading_id: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          due_at?: string
+          id?: string
+          patient_id?: string
+          photo_path?: string | null
+          photo_url?: string | null
+          reading_id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followups_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followups_reading_id_fkey"
+            columns: ["reading_id"]
+            isOneToOne: false
+            referencedRelation: "readings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -184,44 +216,6 @@ export type Database = {
           },
         ]
       }
-      rule_configs: {
-        Row: {
-          normal_interval_min: number
-          patient_id: string
-          recheck_interval_min: number
-          supervisor_alerts: Json
-          thresholds: Json
-          unit: string
-          updated_at: string
-        }
-        Insert: {
-          normal_interval_min?: number
-          patient_id: string
-          recheck_interval_min?: number
-          supervisor_alerts?: Json
-          thresholds?: Json
-          unit: string
-          updated_at?: string
-        }
-        Update: {
-          normal_interval_min?: number
-          patient_id?: string
-          recheck_interval_min?: number
-          supervisor_alerts?: Json
-          thresholds?: Json
-          unit?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rule_configs_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       schedule_state: {
         Row: {
           last_notified_at: string | null
@@ -263,6 +257,42 @@ export type Database = {
           },
         ]
       }
+      threshold_rules: {
+        Row: {
+          actions: Json
+          classification: Database["public"]["Enums"]["threshold_rule_classification"]
+          created_at: string
+          id: string
+          label: string
+          max_value: number | null
+          min_value: number | null
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          classification: Database["public"]["Enums"]["threshold_rule_classification"]
+          created_at?: string
+          id?: string
+          label: string
+          max_value?: number | null
+          min_value?: number | null
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          classification?: Database["public"]["Enums"]["threshold_rule_classification"]
+          created_at?: string
+          id?: string
+          label?: string
+          max_value?: number | null
+          min_value?: number | null
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -271,7 +301,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      threshold_rule_classification: "high" | "normal" | "low" | "critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -397,10 +427,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
-    Enums: {},
+    Enums: {
+      threshold_rule_classification: ["high", "normal", "low", "critical"],
+    },
   },
 } as const
