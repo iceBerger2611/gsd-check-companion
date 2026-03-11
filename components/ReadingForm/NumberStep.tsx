@@ -1,20 +1,15 @@
-import { FollowupType } from "@/db/schema";
 import { ReadingInsert } from "@/repos/readings.repo";
 import { useState } from "react";
 import { View } from "react-native";
 import { Text, TextInput } from "react-native-paper";
+import { StepFuncProps } from "./utils";
 
 const NumberStep = ({
   followup,
-  step,
+  currStep,
   reading,
   setReading,
-}: {
-  followup: FollowupType;
-  step: number;
-  reading: ReadingInsert;
-  setReading: (nextReading: ReadingInsert) => void;
-}) => {
+}: StepFuncProps) => {
   const [currGlucose, setCurrGlucose] = useState<number | null>(
     reading.glucoseValue ?? null,
   );

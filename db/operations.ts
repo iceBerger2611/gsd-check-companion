@@ -2,6 +2,8 @@ import supabase from "@/lib/supabase";
 import { Profile } from "@/types/tables.types";
 import { Session, User } from "@supabase/supabase-js";
 import { identifySupabaseError } from "./utils";
+import { upsertReading } from "@/repos/readings.repo";
+import { Database } from "@/types/database.types";
 
 interface AuthInRes {
   session: Session | null;
@@ -124,20 +126,12 @@ export const GetPatientOfSupervisor = async (supervisorId: string) => {
 };
 
 export const InsertNewReading = async (
-  glucose_value: number,
-  outcome: string,
-  patient_id: string,
-  recorded_at: string,
-  unit: string,
+  reading: Database['public']['Tables']['readings']['Insert']
 ) => {
   try {
-    const { status } = await supabase.from("readings").insert({
-      glucose_value,
-      outcome,
-      patient_id,
-      recorded_at,
-      unit,
-    });
+    const { status, data } = await supabase.from("readings").insert(reading).single()
+    const res = await supabase.from('readings').select('*').eq("id", data?.['id'] as unknown as string).single()
+    await upsertReading({...reading, id: res.data?.id || 'new'})
     return status;
   } catch (error) {
     return handleCatch(error);

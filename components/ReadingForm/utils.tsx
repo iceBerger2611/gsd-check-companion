@@ -1,20 +1,64 @@
-import { FollowupType } from "@/db/schema";
+import { DecisionType, FollowupType } from "@/db/schema";
+import supabase from "@/lib/supabase";
 import { ReadingInsert } from "@/repos/readings.repo";
+import { decode } from "base64-arraybuffer";
+import * as FileSystem from "expo-file-system/legacy";
 import { View } from "react-native";
 import { Button } from "react-native-paper";
 import Animated, {
   LightSpeedInLeft,
   LightSpeedOutRight,
 } from "react-native-reanimated";
+import Toast from "react-native-toast-message";
+import EarlyDecisionStep from "./EarlyDecisionStep";
 import NumberStep from "./NumberStep";
 import PhotoStep from "./PhotoStep";
 
-export type StepFunc = React.FC<{
+export type StepFuncProps = {
+  followup: FollowupType;
   reading: ReadingInsert;
   setReading: (nextReading: ReadingInsert) => void;
   setCurrStep: (nextStep: number) => void;
   currStep: number;
-}>;
+  setPhotoUri: (nextUri: { cornstarch?: string; meter?: string }) => void;
+  setEarlyDecision: (nextDecision: DecisionType | null) => void;
+  earlyDecision: DecisionType | null;
+};
+
+export type StepFunc = React.FC<StepFuncProps>;
+
+export const createPhotoPath = (
+  reading: ReadingInsert,
+  followup: FollowupType,
+) => {
+  const userId = reading.patientId;
+  const readingId = reading.id;
+  const photoType = followup === "drink_cornstarch" ? "cornstarch" : "meter";
+  const timestamp = Date.now();
+  return `${userId}/${readingId}/${photoType}/${timestamp}.jpg`;
+};
+
+export const uploadURIToSupabase = async (uri: string, path: string) => {
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  const arrayBuffer = decode(base64);
+
+  const fileExt = uri.split(".").pop()?.toLowerCase() ?? "jpg";
+
+  const { error } = await supabase.storage
+    .from("intervention-photos")
+    .upload(path, arrayBuffer, {
+      contentType: fileExt === "png" ? "image/png" : "image/jpeg",
+      upsert: false,
+    });
+  Toast.show({
+    type: error ? "error" : "success",
+    text1: error ? error.message : "Photo Uploaded successfuly",
+  });
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+};
 
 export const getSteps = (
   followup: FollowupType,
@@ -22,7 +66,7 @@ export const getSteps = (
 ): StepFunc[] => {
   const steps: StepFunc[] = [];
 
-  const amountOfSteps = followup === 'drink_cornstarch' ? 1 : 2
+  const amountOfSteps = followup === "drink_cornstarch" ? 2 : 3;
 
   for (let index = 0; index < amountOfSteps; index++) {
     const view = ({
@@ -30,16 +74,18 @@ export const getSteps = (
       setReading,
       setCurrStep,
       currStep,
-    }: {
-      reading: ReadingInsert;
-      setReading: (nextReading: ReadingInsert) => void;
-      setCurrStep: (nextStep: number) => void;
-      currStep: number;
-    }) => {
+      setPhotoUri,
+      setEarlyDecision,
+      earlyDecision,
+    }: StepFuncProps) => {
       const isLastStep = currStep === amountOfSteps;
 
       const SingleStep =
-        currStep === 1 && followup === "recheck" ? NumberStep : PhotoStep;
+        currStep === amountOfSteps
+          ? EarlyDecisionStep
+          : currStep === 1 && followup === "recheck"
+            ? NumberStep
+            : PhotoStep;
 
       return (
         <Animated.View
@@ -57,10 +103,14 @@ export const getSteps = (
           }}
         >
           <SingleStep
+            earlyDecision={earlyDecision}
             followup={followup}
-            step={currStep}
+            currStep={currStep}
             reading={reading}
             setReading={setReading}
+            setPhotoUri={setPhotoUri}
+            setCurrStep={setCurrStep}
+            setEarlyDecision={setEarlyDecision}
           />
           <View style={{ flex: 1 }} />
           <View

@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, real, index, check } from "drizzle-orm/sqlite-core";
+import {
+  check,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 export type Intervention = "eat_immediately" | "consume_glucose";
 export type FollowupType = "recheck" | "drink_cornstarch";
@@ -14,6 +21,9 @@ export type Action =
       followupType: FollowupType;
       followupDelay: number;
     };
+
+//export type DecisionType = FollowupType | "none"; --before
+export type DecisionType = Action | null; //--now
 
 export type ThresholdRuleClassification =
   | "high"
@@ -79,6 +89,15 @@ export const readings = sqliteTable(
     note: text("note"),
     meterPhotoUrl: text("meter_photo_url"),
     cornstarchPhotoUrl: text("cornstarch_photo_url"),
+    evaluatedDecision: text("evaluated_decision", {
+      mode: "json",
+    }).$type<Action | null>(),
+    finalDecision: text("final_decision", {
+      mode: "json",
+    }).$type<Action | null>(),
+    wasOverridden: integer("was_overridden", { mode: "boolean" })
+      .notNull()
+      .default(false),
     createdAt: text("created_at"),
   },
   (table) => ({
@@ -117,9 +136,11 @@ export const followups = sqliteTable(
 export const scheduleState = sqliteTable(
   "schedule_state",
   {
-    patientId: text("patient_id").primaryKey().references(() => profiles.id, {
-      onDelete: "cascade",
-    }),
+    patientId: text("patient_id")
+      .primaryKey()
+      .references(() => profiles.id, {
+        onDelete: "cascade",
+      }),
     lastReadingAt: text("last_reading_at"),
     lastValue: real("last_value"),
     lastOutcome: text("last_outcome"),

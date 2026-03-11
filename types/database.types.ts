@@ -173,6 +173,10 @@ export type Database = {
         Row: {
           cornstarch_photo_url: string | null
           created_at: string
+          evaluated_decision:
+            | Database["public"]["Enums"]["decision_type"]
+            | null
+          final_decision: Database["public"]["Enums"]["decision_type"] | null
           glucose_value: number
           id: string
           meter_photo_url: string | null
@@ -181,10 +185,15 @@ export type Database = {
           patient_id: string
           recorded_at: string
           unit: string
+          was_overridden: boolean | null
         }
         Insert: {
           cornstarch_photo_url?: string | null
           created_at?: string
+          evaluated_decision?:
+            | Database["public"]["Enums"]["decision_type"]
+            | null
+          final_decision?: Database["public"]["Enums"]["decision_type"] | null
           glucose_value: number
           id?: string
           meter_photo_url?: string | null
@@ -193,10 +202,15 @@ export type Database = {
           patient_id: string
           recorded_at: string
           unit: string
+          was_overridden?: boolean | null
         }
         Update: {
           cornstarch_photo_url?: string | null
           created_at?: string
+          evaluated_decision?:
+            | Database["public"]["Enums"]["decision_type"]
+            | null
+          final_decision?: Database["public"]["Enums"]["decision_type"] | null
           glucose_value?: number
           id?: string
           meter_photo_url?: string | null
@@ -205,6 +219,7 @@ export type Database = {
           patient_id?: string
           recorded_at?: string
           unit?: string
+          was_overridden?: boolean | null
         }
         Relationships: [
           {
@@ -301,6 +316,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      decision_type: "recheck" | "drink_cornstarch" | "none"
       threshold_rule_classification: "high" | "normal" | "low" | "critical"
     }
     CompositeTypes: {
@@ -429,6 +445,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      decision_type: ["recheck", "drink_cornstarch", "none"],
       threshold_rule_classification: ["high", "normal", "low", "critical"],
     },
   },

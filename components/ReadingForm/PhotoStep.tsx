@@ -1,21 +1,49 @@
-import { FollowupType } from "@/db/schema";
-import { ReadingInsert } from "@/repos/readings.repo";
-import { View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { useState } from "react";
+import { Image, View } from "react-native";
 import { Button, Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
+import { createPhotoPath, StepFuncProps } from "./utils";
 
 const PhotoStep = ({
   followup,
-  step,
+  currStep,
   reading,
   setReading,
-}: {
-  followup: FollowupType;
-  step: number;
-  reading: ReadingInsert;
-  setReading: (nextReading: ReadingInsert) => void;
-}) => {
-  const meterUrl = reading.meterPhotoUrl ?? "no photo taken";
-  const cornstarchUrl = reading.cornstarchPhotoUrl ?? "no photo taken";
+  setPhotoUri,
+}: StepFuncProps) => {
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+
+  const onTakePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Toast.show({
+        type: "error",
+        text1: "Permission to access the Camera is required",
+      });
+      return;
+    }
+
+    const res = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      quality: 0.8,
+    });
+
+    if (res.canceled) {
+      return;
+    }
+
+    const photo = res.assets[0];
+    setImage(photo);
+    setPhotoUri(followup === 'drink_cornstarch' ? { cornstarch: photo.uri } : { meter: photo.uri });
+    const photoPath = createPhotoPath(reading, followup)
+    setReading({
+      ...reading,
+      cornstarchPhotoUrl: followup === 'drink_cornstarch' ? photoPath : null,
+      meterPhotoUrl: followup === 'recheck' ? photoPath : null
+    })
+  };
 
   return (
     <View
@@ -25,7 +53,10 @@ const PhotoStep = ({
         alignItems: "center",
       }}
     >
-      <Text variant="headlineSmall">Take a Photo of Your {followup === 'drink_cornstarch' ? 'Cornstarch' : 'Meter'}</Text>
+      <Text variant="headlineSmall">
+        Take a Photo of Your{" "}
+        {followup === "drink_cornstarch" ? "Cornstarch" : "Meter"}
+      </Text>
       <View
         style={{
           display: "flex",
@@ -33,10 +64,17 @@ const PhotoStep = ({
           alignItems: "center",
         }}
       >
-        <Button icon="camera" mode="contained" uppercase>
+        <Button icon="camera" mode="contained" uppercase onPress={onTakePhoto}>
           TAKE PHOTO
         </Button>
-        {<Text>{followup === 'recheck' ? meterUrl : cornstarchUrl}</Text>}
+        {<Text>{image?.uri.split('/').at(-1) || "no photo taken"}</Text>}
+        {image && (
+          <Image
+            source={{ uri: image.uri }}
+            style={{ width: 250, height: 250, borderRadius: 12 }}
+            resizeMode="cover"
+          />
+        )}
       </View>
     </View>
   );

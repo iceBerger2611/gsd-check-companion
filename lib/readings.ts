@@ -1,14 +1,20 @@
-import { Action } from "@/db/schema";
-import { ReadingInsert, ReadingRow, upsertReading } from "@/repos/readings.repo";
-import { listThresholdRulesByPatient, ThresholdRuleRow } from "@/repos/thresholdRules";
+import { AppError } from "@/db/errors";
+import { Action, DecisionType } from "@/db/schema";
+import { dumpDbReadings } from "@/db/utils";
+import { ReadingInsert, upsertReading } from "@/repos/readings.repo";
+import {
+  listThresholdRulesByPatient,
+  ThresholdRuleRow,
+} from "@/repos/thresholdRules";
+import { reseedLocalThresholdRules } from "./ex";
 
-type ReadingDecision = {
+export type ReadingDecision = {
   matchedRuleId: string;
   actions: Action[];
 };
 
 const findThresholdOfReading = (
-  reading: ReadingRow,
+  reading: ReadingInsert,
   thresholdRules: ThresholdRuleRow[],
 ): ThresholdRuleRow | null => {
   const targetValue = reading.glucoseValue;
@@ -34,8 +40,8 @@ const findThresholdOfReading = (
   return threshold ?? null;
 };
 
-const evaluateReading = (
-  reading: ReadingRow,
+export const evaluateReading = (
+  reading: ReadingInsert,
   thresholdRules: ThresholdRuleRow[],
 ): ReadingDecision | null => {
   const relevantThreshold = findThresholdOfReading(reading, thresholdRules);
@@ -48,28 +54,33 @@ const evaluateReading = (
     : null;
 };
 
-export const processReading = async (reading: ReadingInsert) => {
-  if (!reading.patientId) return
+export const processReading = async (
+  reading: ReadingInsert,
+  earlyDecision?: DecisionType,
+) => {
+  await reseedLocalThresholdRules("31a4df17-b061-4fbd-898e-cd9f7ef2f64f");
+  if (!reading.patientId) return;
 
-  const relatedThresholds = await listThresholdRulesByPatient(reading.patientId)
+  const relatedThresholds = await listThresholdRulesByPatient(
+    reading.patientId,
+  );
 
-  const readingRow: ReadingRow = {
-    id: reading.id,
-    cornstarchPhotoUrl: reading.cornstarchPhotoUrl ?? null,
-    createdAt: reading.createdAt ?? null,
-    glucoseValue: reading.glucoseValue ?? null,
-    meterPhotoUrl: reading.meterPhotoUrl ?? null,
-    note: reading.note ?? null,
-    outcome: reading.outcome ?? null,
-    patientId: reading.patientId ?? null,
-    recordedAt: reading.recordedAt ?? null,
-    unit: reading.unit ?? null
-  } 
+  const newReading: ReadingInsert = {
+    ...reading,
+    recordedAt: Date().toString()
+  };
 
-  const decision = evaluateReading(readingRow, relatedThresholds)
-  
-  if (decision) {
-    await upsertReading(reading)
+  const decision = evaluateReading(newReading, relatedThresholds);
+  const relevantAction = decision?.actions[0];
+
+  newReading.evaluatedDecision = relevantAction || null;
+  newReading.finalDecision = earlyDecision || relevantAction || null;
+  newReading.wasOverridden = !!earlyDecision;
+  try {
+    await upsertReading(newReading);
+    await dumpDbReadings();
     // create notifications and followups
+  } catch (error) {
+    return error as AppError;
   }
-}
+};

@@ -1,4 +1,4 @@
-import { db } from "./client"
+import { db } from "./client";
 
 export async function resetLocalDB() {
   await db.run(`PRAGMA foreign_keys = OFF;`);
@@ -63,6 +63,9 @@ export async function initLocalDB() {
       note TEXT,
       meter_photo_url TEXT,
       cornstarch_photo_url TEXT,
+      evaluated_decision TEXT,
+      final_decision TEXT,
+      was_overridden INTEGER NOT NULL DEFAULT 0,
       created_at TEXT,
       FOREIGN KEY (patient_id) REFERENCES profiles(id) ON DELETE CASCADE
     );
