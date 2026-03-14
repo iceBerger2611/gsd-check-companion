@@ -1,8 +1,8 @@
-import { DecisionType } from "@/db/schema";
+import { DecisionType, FollowupType, Intervention } from "@/db/schema";
 import { useState } from "react";
 import { View } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
-import { StepFuncProps } from "./utils";
+import { Button, SegmentedButtons, Text, TextInput } from "react-native-paper";
+import { createValueLabel, getDecisionOptions, StepFuncProps } from "./utils";
 
 const EarlyDecisionStep = ({
   followup,
@@ -16,6 +16,18 @@ const EarlyDecisionStep = ({
     reading.glucoseValue ?? null,
   );
 
+  const [decisionActionType, setDecisionActionType] = useState<
+    Intervention | FollowupType | null
+  >(
+    !earlyDecision
+      ? null
+      : earlyDecision.type === "followup"
+        ? earlyDecision.followupType
+        : earlyDecision.intervention,
+  );
+
+  const decisionOptions = getDecisionOptions(followup);
+
   const onMinutesChange = (minutesValue: string) => {
     setCurrMinutes(Number(minutesValue));
   };
@@ -23,15 +35,18 @@ const EarlyDecisionStep = ({
   const onAgree = () => {
     const interventionDecision: DecisionType = {
       type: "intervention",
-      intervention: "eat_immediately",
+      intervention: decisionActionType as Intervention,
     };
     const followupDecision: DecisionType = {
       type: "followup",
-      followupType: "recheck",
-      followupDelay: currMinutes || 0,
+      followupType: decisionActionType as FollowupType,
+      followupDelay: decisionActionType === 'drink_cornstarch' ? 180 : currMinutes || 0,
     };
     setEarlyDecision(
-      followup === "recheck" ? interventionDecision : followupDecision,
+      decisionActionType === "recheck" ||
+        decisionActionType === "drink_cornstarch"
+        ? followupDecision
+        : interventionDecision,
     );
   };
 
@@ -43,15 +58,15 @@ const EarlyDecisionStep = ({
         alignItems: "center",
       }}
     >
-      {followup === "recheck" && (
-        <Text variant="headlineSmall" style={{ alignContent: "space-between" }}>
-          Would you like to eat immediately instead?
-        </Text>
-      )}
-      {followup === "drink_cornstarch" && (
-        <Text variant="headlineSmall">Would you like to recheck in:</Text>
-      )}
-      {followup === "drink_cornstarch" && (
+      <Text variant="headlineSmall" style={{ alignContent: "space-between" }}>
+        Would you like to:
+      </Text>
+      <SegmentedButtons
+        buttons={decisionOptions}
+        value={followup}
+        onValueChange={(value) => setDecisionActionType(value)}
+      />
+      {decisionActionType === "recheck" && (
         <TextInput
           inputMode="numeric"
           label="minutes"
@@ -61,9 +76,7 @@ const EarlyDecisionStep = ({
           value={currMinutes?.toString() || undefined}
         />
       )}
-      {followup === "drink_cornstarch" && (
-        <Text variant="headlineSmall">instead?</Text>
-      )}
+      <Text variant="headlineSmall">instead?</Text>
       <View
         style={{
           display: "flex",
@@ -72,17 +85,11 @@ const EarlyDecisionStep = ({
           justifyContent: "space-evenly",
         }}
       >
-        <Button
-          uppercase
-          disabled={!!earlyDecision}
-          onPress={onAgree}
-          mode="outlined"
-        >
+        <Button uppercase onPress={onAgree} mode="outlined">
           YES
         </Button>
         <Button
           uppercase
-          disabled={!earlyDecision}
           onPress={() => setEarlyDecision(null)}
           mode="outlined"
         >
@@ -91,11 +98,9 @@ const EarlyDecisionStep = ({
       </View>
       <Text>
         Current Decision:{" "}
-        {!earlyDecision
+        {!decisionActionType
           ? "none"
-          : earlyDecision.type === "intervention"
-            ? earlyDecision.intervention
-            : `${earlyDecision.followupType} in ${earlyDecision.followupDelay} minutes`}
+          : createValueLabel(decisionActionType).label}
       </Text>
     </View>
   );

@@ -9,7 +9,9 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 export type Intervention = "eat_immediately" | "consume_glucose";
-export type FollowupType = "recheck" | "drink_cornstarch";
+
+export const followupTypes = ["recheck", "drink_cornstarch"] as const;
+export type FollowupType = (typeof followupTypes)[number];
 
 export type Action =
   | {
@@ -116,7 +118,12 @@ export const followups = sqliteTable(
     patientId: text("patient_id").references(() => profiles.id, {
       onDelete: "cascade",
     }),
-    type: text("type"),
+    type: text("type", { enum: followupTypes }).$type<FollowupType>().notNull(),
+    scheduledNotificationIds: text("scheduled_notification_ids", {
+      mode: "json",
+    })
+      .$type<string[]>()
+      .notNull(),
     dueAt: text("due_at"),
     status: text("status"),
     completedAt: text("completed_at"),

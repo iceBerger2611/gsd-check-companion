@@ -6,14 +6,16 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 import Toast from "react-native-toast-message";
-import { getSteps, uploadURIToSupabase } from "./utils";
+import { getSteps, uploadURIToSupabase, validateLog } from "./utils";
 
 const ReadingForm = ({
   followup,
   patientId,
+  sourceFollowupId,
 }: {
   followup: FollowupType;
   patientId: string;
+  sourceFollowupId?: string;
 }) => {
   const [currStep, setCurrStep] = useState(1);
   const [reading, setReading] = useState<ReadingInsert>({
@@ -31,7 +33,7 @@ const ReadingForm = ({
     null,
   );
 
-  const earlyDecisionRef = useRef<DecisionType | null>(null)
+  const earlyDecisionRef = useRef<DecisionType | null>(null);
 
   const router = useRouter();
 
@@ -45,21 +47,23 @@ const ReadingForm = ({
 
   const onFinish = useCallback(
     async (reading: ReadingInsert) => {
-      if (
-        (followup === "recheck" && !reading.glucoseValue) ||
-        (followup === "drink_cornstarch" && !reading.cornstarchPhotoUrl)
-      ) {
+      const latestPhotoUri = photoUriRef.current;
+      const latestEarlyDecision = earlyDecisionRef.current;
+
+      const validation = validateLog(reading, followup, latestEarlyDecision);
+      if (!validation.isValid) {
         Toast.show({
           type: "error",
-          text1: `No ${followup === "recheck" ? "Glucose Value" : "Cornstarch Photo"} Provided`,
+          text1: `No ${validation.error} Provided`,
         });
         return;
       }
 
-      const latestPhotoUri = photoUriRef.current;
-      const latestEarlyDecision = earlyDecisionRef.current
-
-      const res = await processReading(reading, latestEarlyDecision);
+      const res = await processReading(
+        reading,
+        latestEarlyDecision,
+        sourceFollowupId,
+      );
       Toast.show({
         type: res instanceof Error ? "error" : "success",
         text1: res instanceof Error ? res.message : "Reading Saved",
@@ -84,9 +88,9 @@ const ReadingForm = ({
         await uploadURIToSupabase(latestPhotoUri.meter, reading.meterPhotoUrl);
       }
 
-      router.navigate(`/(patient)?id=${patientId}`);
+      router.navigate("/(patient)");
     },
-    [followup, patientId, router],
+    [followup, router, sourceFollowupId],
   );
 
   const steps = useMemo(

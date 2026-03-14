@@ -2,7 +2,7 @@ import { listReadingsByPatient, ReadingRow } from "@/repos/readings.repo";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-import { Button, DataTable } from "react-native-paper";
+import { Button, DataTable, Text } from "react-native-paper";
 
 const RecentHistory = ({ patientId }: { patientId: string }) => {
   const [readings, setReadings] = useState<ReadingRow[] | null>(null);
@@ -19,7 +19,8 @@ const RecentHistory = ({ patientId }: { patientId: string }) => {
   }, [patientId]);
 
   return (
-    <View style={{ padding: 30 }}>
+    <View style={{ padding: 30, paddingTop: 80 }}>
+      <View style={{ alignItems: 'center' }}><Text variant="headlineSmall">RECENT HISTORY</Text></View>
       <DataTable>
         <DataTable.Header>
           <DataTable.Title>Value</DataTable.Title>

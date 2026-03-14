@@ -1,4 +1,4 @@
-import { DecisionType, FollowupType } from "@/db/schema";
+import { DecisionType, FollowupType, Intervention } from "@/db/schema";
 import supabase from "@/lib/supabase";
 import { ReadingInsert } from "@/repos/readings.repo";
 import { decode } from "base64-arraybuffer";
@@ -10,9 +10,10 @@ import Animated, {
   LightSpeedOutRight,
 } from "react-native-reanimated";
 import Toast from "react-native-toast-message";
+import CornPhotoStep from "./CornPhotoStep";
 import EarlyDecisionStep from "./EarlyDecisionStep";
+import MeterPhotoStep from "./MeterPhotoStep";
 import NumberStep from "./NumberStep";
-import PhotoStep from "./PhotoStep";
 
 export type StepFuncProps = {
   followup: FollowupType;
@@ -26,6 +27,73 @@ export type StepFuncProps = {
 };
 
 export type StepFunc = React.FC<StepFuncProps>;
+
+export const validateLog = (
+  reading: ReadingInsert,
+  followup: FollowupType,
+  earlyDecision: DecisionType | null,
+): { isValid: boolean; error?: string } => {
+  let isValid = true;
+  const missingValues: string[] = [];
+
+  if (followup === "recheck" && !reading.glucoseValue && !earlyDecision) {
+    missingValues.push("Glucose Value");
+    isValid = false;
+  }
+
+  if (
+    followup === "drink_cornstarch" &&
+    !reading.cornstarchPhotoUrl &&
+    !earlyDecision
+  ) {
+    missingValues.push("Cornstarch Photo");
+    isValid = false;
+  }
+
+  if (
+    followup === "recheck" &&
+    earlyDecision?.type === "followup" &&
+    earlyDecision.followupType === "drink_cornstarch" &&
+    !reading.cornstarchPhotoUrl
+  ) {
+    missingValues.push("Cornstarch Photo");
+    isValid = false;
+  }
+
+  return {
+    isValid,
+    ...(missingValues.length && { error: missingValues.join(", ") }),
+  };
+};
+
+export const createValueLabel = (value: Intervention | FollowupType) => {
+  const splitValue = value.split("_");
+  const label = splitValue.reduce<string>((prev, curr, index) => {
+    if (!curr) return prev;
+    const capitalCurr = curr.charAt(0).toUpperCase() + curr.slice(1);
+    return `${prev}${index === 0 ? "" : " "}${capitalCurr}`;
+  }, "");
+  return { value, label };
+};
+
+export const getDecisionOptions = (
+  followup: FollowupType,
+): { label: string; value: Intervention | FollowupType }[] => {
+  const decisionOptions: {
+    label: string;
+    value: Intervention | FollowupType;
+  }[] = [];
+  decisionOptions.push(createValueLabel("consume_glucose"));
+  decisionOptions.push(createValueLabel("eat_immediately"));
+  if (followup === "recheck") {
+    decisionOptions.push(createValueLabel("drink_cornstarch"));
+  }
+  if (followup === "drink_cornstarch") {
+    decisionOptions.push(createValueLabel("recheck"));
+  }
+
+  return decisionOptions;
+};
 
 export const createPhotoPath = (
   reading: ReadingInsert,
@@ -64,11 +132,19 @@ export const getSteps = (
   followup: FollowupType,
   onFinish: (reading: ReadingInsert) => void,
 ): StepFunc[] => {
-  const steps: StepFunc[] = [];
+  const stepfunctions: StepFunc[] = [];
 
-  const amountOfSteps = followup === "drink_cornstarch" ? 2 : 3;
+  const layoutSteps: StepFunc[] = [
+    MeterPhotoStep,
+    CornPhotoStep,
+    EarlyDecisionStep,
+  ];
 
-  for (let index = 0; index < amountOfSteps; index++) {
+  if (followup === "recheck") layoutSteps.unshift(NumberStep);
+
+  const amountOfSteps = layoutSteps.length;
+
+  layoutSteps.forEach((Step, index) => {
     const view = ({
       reading,
       setReading,
@@ -79,13 +155,6 @@ export const getSteps = (
       earlyDecision,
     }: StepFuncProps) => {
       const isLastStep = currStep === amountOfSteps;
-
-      const SingleStep =
-        currStep === amountOfSteps
-          ? EarlyDecisionStep
-          : currStep === 1 && followup === "recheck"
-            ? NumberStep
-            : PhotoStep;
 
       return (
         <Animated.View
@@ -102,7 +171,7 @@ export const getSteps = (
             padding: 24,
           }}
         >
-          <SingleStep
+          <Step
             earlyDecision={earlyDecision}
             followup={followup}
             currStep={currStep}
@@ -134,7 +203,9 @@ export const getSteps = (
               uppercase
               mode="outlined"
               onPress={() =>
-                isLastStep ? onFinish(reading) : setCurrStep(currStep + 1)
+                isLastStep
+                  ? onFinish({ ...reading, createdAt: new Date().toString() })
+                  : setCurrStep(currStep + 1)
               }
             >
               {isLastStep ? "finish" : "next"}
@@ -144,8 +215,7 @@ export const getSteps = (
       );
     };
 
-    steps.push(view);
-  }
-
-  return steps;
+    stepfunctions.push(view);
+  });
+  return stepfunctions;
 };

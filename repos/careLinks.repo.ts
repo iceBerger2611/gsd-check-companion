@@ -30,9 +30,6 @@ export const listPatientCareLinks = async (
       .select()
       .from(careLinks)
       .where(eq(careLinks.patientId, patientId));
-    if (!results.length) {
-      throw new NotFoundError(`Care links of patient ${patientId} not found`);
-    }
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get care links");
@@ -47,11 +44,6 @@ export const listSupervisorCareLinks = async (
       .select()
       .from(careLinks)
       .where(eq(careLinks.supervisorId, supervisorId));
-    if (!results.length) {
-      throw new NotFoundError(
-        `Care links of supervisor ${supervisorId} not found`,
-      );
-    }
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get care links");

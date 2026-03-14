@@ -31,9 +31,6 @@ export const listFollowupsByPatient = async (
       .from(followups)
       .where(eq(followups.patientId, patientId))
       .orderBy(desc(followups.dueAt));
-    if (!results.length) {
-      throw new NotFoundError(`Followup of patient ${patientId} not found`);
-    }
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get followups");

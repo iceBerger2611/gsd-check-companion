@@ -33,13 +33,22 @@ export const listThresholdRulesByPatient = async (
       .from(thresholdRules)
       .where(eq(thresholdRules.patientId, patientId))
       .orderBy(desc(thresholdRules.createdAt));
-    if (!results.length) {
-      throw new NotFoundError(
-        `Threshold rules of patient ${patientId} not found`,
-      );
-    }
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get threshold rules");
+  }
+};
+
+export const upsertThreshold = async (
+  threshold: ThresholdRuleInsert,
+): Promise<void> => {
+  try {
+    await db
+      .insert(thresholdRules)
+      .values(threshold)
+      .onConflictDoUpdate({ target: thresholdRules.id, set: threshold });
+  } catch (error) {
+    console.log(error);
+    throw mapDbError(error, "failed to upsert threshold");
   }
 };

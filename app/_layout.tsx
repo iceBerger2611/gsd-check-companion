@@ -1,5 +1,6 @@
 import { initLocalDB } from "@/db/init";
 import { appTheme } from "@/lib/theme";
+import { useNotificationRouting } from "@/notifications/listeners";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
@@ -9,6 +10,9 @@ export default function RootLayout() {
   useEffect(() => {
     initLocalDB();
   }, []);
+
+  useNotificationRouting();
+
   return (
     <PaperProvider theme={appTheme}>
       <Stack screenOptions={{ headerShown: false }}>

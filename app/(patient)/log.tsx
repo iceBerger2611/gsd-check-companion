@@ -1,16 +1,25 @@
 import ReadingForm from "@/components/ReadingForm";
-import { FollowupType } from "@/db/schema";
-import { useSearchParams } from "expo-router/build/hooks";
+import { useGetProfile } from "@/hooks/profile";
+import { NotificationData } from "@/notifications/scheduler";
+import { useLocalSearchParams } from "expo-router/build/hooks";
+import { View } from "react-native";
+import { ActivityIndicator, Text } from "react-native-paper";
 
 export default function Screen() {
-  const searchParams = useSearchParams();
+  const { followup, followupId } =
+    useLocalSearchParams<Partial<NotificationData>>();
+  const { isFetching, profile: patient } = useGetProfile();
 
-  const followup = searchParams.get("followup");
-  const patientId = searchParams.get("patientId");
-  return (
+  return isFetching ? (
+    <View>
+      <Text>Loading Data...</Text>
+      <ActivityIndicator animating />
+    </View>
+  ) : (
     <ReadingForm
-      followup={(followup as FollowupType) ?? "recheck"}
-      patientId={patientId ?? ""}
+      followup={followup ?? "recheck"}
+      patientId={patient?.id ?? ""}
+      sourceFollowupId={followupId}
     />
   );
 }

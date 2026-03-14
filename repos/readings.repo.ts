@@ -31,9 +31,6 @@ export const listReadingsByPatient = async (
       .from(readings)
       .where(eq(readings.patientId, patientId))
       .orderBy(desc(readings.recordedAt));
-    if (!results.length) {
-      throw new NotFoundError(`Readings of patient ${patientId} not found`);
-    }
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get readings");
@@ -76,9 +73,6 @@ export const getReadingsBetween = async (
         ),
       )
       .orderBy(desc(readings.recordedAt));
-    if (!results.length) {
-      throw new NotFoundError(`Readings of patient ${patientId} not found`);
-    }
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get readings");

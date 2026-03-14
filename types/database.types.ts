@@ -98,8 +98,9 @@ export type Database = {
           photo_path: string | null
           photo_url: string | null
           reading_id: string
+          scheduled_notification_ids: string[]
           status: string
-          type: string
+          type: Database["public"]["Enums"]["followup_type"]
           updated_at: string
         }
         Insert: {
@@ -111,8 +112,9 @@ export type Database = {
           photo_path?: string | null
           photo_url?: string | null
           reading_id: string
+          scheduled_notification_ids?: string[]
           status?: string
-          type: string
+          type: Database["public"]["Enums"]["followup_type"]
           updated_at?: string
         }
         Update: {
@@ -124,8 +126,9 @@ export type Database = {
           photo_path?: string | null
           photo_url?: string | null
           reading_id?: string
+          scheduled_notification_ids?: string[]
           status?: string
-          type?: string
+          type?: Database["public"]["Enums"]["followup_type"]
           updated_at?: string
         }
         Relationships: [
@@ -173,10 +176,8 @@ export type Database = {
         Row: {
           cornstarch_photo_url: string | null
           created_at: string
-          evaluated_decision:
-            | Database["public"]["Enums"]["decision_type"]
-            | null
-          final_decision: Database["public"]["Enums"]["decision_type"] | null
+          evaluated_decision: Json | null
+          final_decision: Json | null
           glucose_value: number
           id: string
           meter_photo_url: string | null
@@ -190,10 +191,8 @@ export type Database = {
         Insert: {
           cornstarch_photo_url?: string | null
           created_at?: string
-          evaluated_decision?:
-            | Database["public"]["Enums"]["decision_type"]
-            | null
-          final_decision?: Database["public"]["Enums"]["decision_type"] | null
+          evaluated_decision?: Json | null
+          final_decision?: Json | null
           glucose_value: number
           id?: string
           meter_photo_url?: string | null
@@ -207,10 +206,8 @@ export type Database = {
         Update: {
           cornstarch_photo_url?: string | null
           created_at?: string
-          evaluated_decision?:
-            | Database["public"]["Enums"]["decision_type"]
-            | null
-          final_decision?: Database["public"]["Enums"]["decision_type"] | null
+          evaluated_decision?: Json | null
+          final_decision?: Json | null
           glucose_value?: number
           id?: string
           meter_photo_url?: string | null
@@ -317,6 +314,7 @@ export type Database = {
     }
     Enums: {
       decision_type: "recheck" | "drink_cornstarch" | "none"
+      followup_type: "recheck" | "drink_cornstarch"
       threshold_rule_classification: "high" | "normal" | "low" | "critical"
     }
     CompositeTypes: {
@@ -446,6 +444,7 @@ export const Constants = {
   public: {
     Enums: {
       decision_type: ["recheck", "drink_cornstarch", "none"],
+      followup_type: ["recheck", "drink_cornstarch"],
       threshold_rule_classification: ["high", "normal", "low", "critical"],
     },
   },

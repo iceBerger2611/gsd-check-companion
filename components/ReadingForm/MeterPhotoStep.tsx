@@ -5,7 +5,7 @@ import { Button, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { createPhotoPath, StepFuncProps } from "./utils";
 
-const PhotoStep = ({
+const MeterPhotoStep = ({
   followup,
   currStep,
   reading,
@@ -36,12 +36,11 @@ const PhotoStep = ({
 
     const photo = res.assets[0];
     setImage(photo);
-    setPhotoUri(followup === 'drink_cornstarch' ? { cornstarch: photo.uri } : { meter: photo.uri });
+    setPhotoUri({ meter: photo.uri });
     const photoPath = createPhotoPath(reading, followup)
     setReading({
       ...reading,
-      cornstarchPhotoUrl: followup === 'drink_cornstarch' ? photoPath : null,
-      meterPhotoUrl: followup === 'recheck' ? photoPath : null
+      meterPhotoUrl: photoPath
     })
   };
 
@@ -54,8 +53,7 @@ const PhotoStep = ({
       }}
     >
       <Text variant="headlineSmall">
-        Take a Photo of Your{" "}
-        {followup === "drink_cornstarch" ? "Cornstarch" : "Meter"}
+        Take a Photo of Your Meter
       </Text>
       <View
         style={{
@@ -80,4 +78,4 @@ const PhotoStep = ({
   );
 };
 
-export default PhotoStep;
+export default MeterPhotoStep;

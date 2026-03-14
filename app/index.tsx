@@ -25,9 +25,9 @@ export default function Index() {
         const res = await GetUserProfile(id);
         if (res && !(res instanceof Error)) {
           if (res.role === "supervisor") {
-            router.navigate(`/(supervisor)/dashboard?id=${id}`);
+            router.navigate(`/(supervisor)/dashboard`);
           } else {
-            router.navigate(`/(patient)?id=${id}`);
+            router.navigate(`/(patient)`);
           }
         } else {
           await supabase.auth.signOut();
