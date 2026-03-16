@@ -1,0 +1,315 @@
+import { Action, followupTypes, interventions } from "@/db/schema";
+import { Database } from "@/types/database.types";
+import { CareLinkInsert, CareLinkRow } from "./local/careLinks.repo";
+import { FollowupInsert, FollowupRow } from "./local/followups.repo";
+import { ProfileInsert, ProfileRow } from "./local/profiles.repo";
+import { ReadingInsert, ReadingRow } from "./local/readings.repo";
+import {
+  ThresholdRuleInsert,
+  ThresholdRuleRow,
+} from "./local/thresholdRules.repo";
+
+export const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+export const isAction = (value: unknown): value is Action => {
+  if (!isRecord(value) || typeof value.type !== "string") return false;
+
+  switch (value.type) {
+    case "intervention":
+      return (
+        typeof value.intervention === "string" &&
+        (interventions as readonly string[]).includes(value.intervention)
+      );
+    case "followup":
+      return (
+        typeof value.followupType === "string" &&
+        (followupTypes as readonly string[]).includes(value.followupType) &&
+        typeof value.followupDelay === "number"
+      );
+    default:
+      return false;
+  }
+};
+
+export const isActionArray = (value: unknown): value is Action[] => {
+  return Array.isArray(value) && value.every(isAction);
+};
+
+export const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  return String(error);
+};
+
+export function nowIso() {
+  return new Date().toISOString();
+}
+
+export function buildPendingCreateFields() {
+  const now = nowIso();
+  return {
+    created_at: now,
+    updated_at: now,
+    deleted_at: null,
+    sync_status: "pending" as const,
+    last_synced_at: null,
+    sync_error: null,
+  };
+}
+
+export function buildPendingUpdateFields() {
+  return {
+    updated_at: nowIso(),
+    sync_status: "pending" as const,
+    sync_error: null,
+  };
+}
+
+export function buildPendingDeleteFields() {
+  const now = nowIso();
+  return {
+    deleted_at: now,
+    updated_at: now,
+    sync_status: "pending" as const,
+    sync_error: null,
+  };
+}
+
+export type RemoteReadingUpsertPayload = Omit<
+  Database["public"]["Tables"]["readings"]["Insert"],
+  "sync_status" | "last_synced_at" | "sync_error"
+>;
+
+export type RemoteFollowupUpsertPayload = Omit<
+  Database["public"]["Tables"]["followups"]["Insert"],
+  "sync_status" | "last_synced_at" | "sync_error"
+>;
+
+export type RemoteThresholdRuleUpsertPayload = Omit<
+  Database["public"]["Tables"]["threshold_rules"]["Insert"],
+  "sync_status" | "last_synced_at" | "sync_error"
+>;
+
+export type RemoteCareLinkUpsertPayload = Omit<
+  Database["public"]["Tables"]["care_links"]["Insert"],
+  "sync_status" | "last_synced_at" | "sync_error"
+>;
+
+export type RemoteProfileUpsertPayload = Omit<
+  Database["public"]["Tables"]["profiles"]["Insert"],
+  "sync_status" | "last_synced_at" | "sync_error"
+>;
+
+export const mapLocalReadingToRemote = (
+  row: ReadingRow,
+): RemoteReadingUpsertPayload => {
+  if (!row.id) throw new Error("Reading missing id");
+  if (!row.patientId) throw new Error("Reading missing patientId");
+  if (row.glucoseValue == null) throw new Error("Reading missing glucoseValue");
+  if (!row.recordedAt) throw new Error("Reading missing recordedAt");
+
+  return {
+    id: row.id,
+    patient_id: row.patientId,
+    glucose_value: row.glucoseValue,
+    outcome: row.outcome ?? "",
+    unit: row.unit ?? "",
+    cornstarch_photo_url: row.cornstarchPhotoUrl,
+    meter_photo_url: row.meterPhotoUrl,
+    note: row.note,
+    was_overridden: row.wasOverridden,
+    recorded_at: row.recordedAt,
+    created_at: row.createdAt ?? undefined,
+    updated_at: row.updatedAt ?? undefined,
+    deleted_at: row.deletedAt,
+    evaluated_decision: row.evaluatedDecision,
+    final_decision: row.finalDecision,
+  };
+};
+
+export const mapLocalFollowupToRemote = (
+  row: FollowupRow,
+): RemoteFollowupUpsertPayload => {
+  if (!row.id) throw new Error("Followup missing id");
+  if (!row.status) throw new Error("Followup missing status");
+  if (!row.patientId) throw new Error("Followup missing patientId");
+  if (!row.readingId) throw new Error("Followup missing readingId");
+  if (!row.dueAt) throw new Error("Followup missing dueAt");
+
+  return {
+    id: row.id,
+    type: row.type,
+    status: row.status,
+    photo_url: row.photoUrl,
+    photo_path: row.photoPath,
+    scheduled_notification_ids: row.scheduledNotificationIds,
+    patient_id: row.patientId,
+    reading_id: row.readingId,
+    due_at: row.dueAt,
+    created_at: row.createdAt ?? undefined,
+    updated_at: row.updatedAt ?? undefined,
+    completed_at: row.completedAt,
+    deleted_at: row.deletedAt,
+  };
+};
+
+export const mapLocalThresholdRuleToRemote = (
+  row: ThresholdRuleRow,
+): RemoteThresholdRuleUpsertPayload => {
+  if (!row.id) throw new Error("ThresholdRule missing id");
+  if (!row.classification)
+    throw new Error("ThresholdRule missing classification");
+  if (!row.label) throw new Error("ThresholdRule missing label");
+  if (!row.patientId) throw new Error("ThresholdRule missing patientId");
+  if (!row.actions) throw new Error("ThresholdRule missing actions");
+
+  return {
+    id: row.id,
+    classification: row.classification,
+    label: row.label,
+    patient_id: row.patientId,
+    actions: row.actions,
+    max_value: row.maxValue,
+    min_value: row.minValue,
+    created_at: row.createdAt ?? undefined,
+    updated_at: row.updatedAt ?? undefined,
+    deleted_at: row.deletedAt,
+  };
+};
+
+export const mapLocalCareLinkToRemote = (
+  row: CareLinkRow,
+): RemoteCareLinkUpsertPayload => {
+  if (!row.id) throw new Error("CareLink missing id");
+  if (!row.patientId) throw new Error("CareLink missing patientId");
+  if (!row.supervisorId) throw new Error("CareLink missing supervisorId");
+  if (!row.status) throw new Error("CareLink missing status");
+
+  return {
+    id: row.id,
+    patient_id: row.patientId,
+    supervisor_id: row.supervisorId,
+    status: row.status,
+    created_at: row.createdAt ?? undefined,
+    updated_at: row.updatedAt ?? undefined,
+    deleted_at: row.deletedAt,
+  };
+};
+
+export const mapLocalProfileToRemote = (
+  row: ProfileRow,
+): RemoteProfileUpsertPayload => {
+  if (!row.id) throw new Error("Profile missing id");
+  if (!row.role) throw new Error("Profile missing role");
+
+  return {
+    id: row.id,
+    display_name: row.displayName,
+    role: row.role,
+    created_at: row.createdAt ?? undefined,
+    updated_at: row.updatedAt ?? undefined,
+    deleted_at: row.deletedAt,
+  };
+};
+
+export function mapRemoteProfileToLocal(
+  row: Database["public"]["Tables"]["profiles"]["Row"],
+): ProfileInsert {
+  return {
+    id: row.id,
+    role: row.role,
+    displayName: row.display_name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    syncStatus: "synced",
+    lastSyncedAt: nowIso(),
+    syncError: null,
+  };
+}
+
+export function mapRemoteCareLinkToLocal(
+  row: Database["public"]["Tables"]["care_links"]["Row"],
+): CareLinkInsert {
+  return {
+    id: row.id,
+    patientId: row.patient_id,
+    status: row.status,
+    supervisorId: row.supervisor_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    syncStatus: "synced",
+    lastSyncedAt: nowIso(),
+    syncError: null,
+  };
+}
+
+export function mapRemoteThresholdRuleToLocal(
+  row: Database["public"]["Tables"]["threshold_rules"]["Row"],
+): ThresholdRuleInsert {
+  return {
+    id: row.id,
+    patientId: row.patient_id,
+    actions: isActionArray(row.actions) ? row.actions : [],
+    classification: row.classification,
+    label: row.label,
+    maxValue: row.max_value,
+    minValue: row.min_value,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    syncStatus: "synced",
+    lastSyncedAt: nowIso(),
+    syncError: null,
+  };
+}
+
+export function mapRemoteReadingToLocal(
+  row: Database["public"]["Tables"]["readings"]["Row"],
+): ReadingInsert {
+  return {
+    id: row.id,
+    patientId: row.patient_id,
+    cornstarchPhotoUrl: row.cornstarch_photo_url,
+    meterPhotoUrl: row.meter_photo_url,
+    evaluatedDecision: isAction(row.evaluated_decision) ? row.evaluated_decision : null,
+    finalDecision: isAction(row.final_decision) ? row.final_decision : null,
+    glucoseValue: row.glucose_value,
+    note: row.note,
+    outcome: row.outcome,
+    recordedAt: row.recorded_at,
+    unit: row.unit,
+    wasOverridden: row.was_overridden ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    syncStatus: "synced",
+    lastSyncedAt: nowIso(),
+    syncError: null,
+  };
+}
+
+export function mapRemoteFollowupToLocal(
+  row: Database["public"]["Tables"]["followups"]["Row"],
+): FollowupInsert {
+  return {
+    id: row.id,
+    patientId: row.patient_id,
+    scheduledNotificationIds: row.scheduled_notification_ids,
+    type: row.type,
+    photoPath: row.photo_path,
+    photoUrl: row.photo_url,
+    readingId: row.reading_id,
+    status: row.status,
+    dueAt: row.due_at,
+    completedAt: row.completed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    syncStatus: "synced",
+    lastSyncedAt: nowIso(),
+    syncError: null,
+  };
+}

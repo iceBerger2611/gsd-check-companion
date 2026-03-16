@@ -7,7 +7,6 @@ import { createPhotoPath, StepFuncProps } from "./utils";
 
 const MeterPhotoStep = ({
   followup,
-  currStep,
   reading,
   setReading,
   setPhotoUri,
@@ -37,11 +36,11 @@ const MeterPhotoStep = ({
     const photo = res.assets[0];
     setImage(photo);
     setPhotoUri({ meter: photo.uri });
-    const photoPath = createPhotoPath(reading, followup)
+    const photoPath = createPhotoPath(reading, followup);
     setReading({
       ...reading,
-      meterPhotoUrl: photoPath
-    })
+      meterPhotoUrl: photoPath,
+    });
   };
 
   return (
@@ -52,9 +51,7 @@ const MeterPhotoStep = ({
         alignItems: "center",
       }}
     >
-      <Text variant="headlineSmall">
-        Take a Photo of Your Meter
-      </Text>
+      <Text variant="headlineSmall">Take a Photo of Your Meter</Text>
       <View
         style={{
           display: "flex",
@@ -65,7 +62,7 @@ const MeterPhotoStep = ({
         <Button icon="camera" mode="contained" uppercase onPress={onTakePhoto}>
           TAKE PHOTO
         </Button>
-        {<Text>{image?.uri.split('/').at(-1) || "no photo taken"}</Text>}
+        {<Text>{image?.uri.split("/").at(-1) || "no photo taken"}</Text>}
         {image && (
           <Image
             source={{ uri: image.uri }}

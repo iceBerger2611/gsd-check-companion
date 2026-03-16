@@ -17,24 +17,39 @@ export type Database = {
       care_links: {
         Row: {
           created_at: string
+          deleted_at: string | null
           id: string
+          last_synced_at: string | null
           patient_id: string
           status: string
           supervisor_id: string
+          sync_error: string | null
+          sync_status: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
+          last_synced_at?: string | null
           patient_id: string
           status?: string
           supervisor_id: string
+          sync_error?: string | null
+          sync_status?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
+          last_synced_at?: string | null
           patient_id?: string
           status?: string
           supervisor_id?: string
+          sync_error?: string | null
+          sync_status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -92,42 +107,54 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          deleted_at: string | null
           due_at: string
           id: string
+          last_synced_at: string | null
           patient_id: string
           photo_path: string | null
           photo_url: string | null
           reading_id: string
           scheduled_notification_ids: string[]
           status: string
+          sync_error: string | null
+          sync_status: string
           type: Database["public"]["Enums"]["followup_type"]
           updated_at: string
         }
         Insert: {
           completed_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           due_at: string
           id?: string
+          last_synced_at?: string | null
           patient_id: string
           photo_path?: string | null
           photo_url?: string | null
           reading_id: string
           scheduled_notification_ids?: string[]
           status?: string
+          sync_error?: string | null
+          sync_status?: string
           type: Database["public"]["Enums"]["followup_type"]
           updated_at?: string
         }
         Update: {
           completed_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           due_at?: string
           id?: string
+          last_synced_at?: string | null
           patient_id?: string
           photo_path?: string | null
           photo_url?: string | null
           reading_id?: string
           scheduled_notification_ids?: string[]
           status?: string
+          sync_error?: string | null
+          sync_status?: string
           type?: Database["public"]["Enums"]["followup_type"]
           updated_at?: string
         }
@@ -151,23 +178,35 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deleted_at: string | null
           display_name: string | null
           id: string
+          last_synced_at: string | null
           role: string | null
+          sync_error: string | null
+          sync_status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           id: string
+          last_synced_at?: string | null
           role?: string | null
+          sync_error?: string | null
+          sync_status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           id?: string
+          last_synced_at?: string | null
           role?: string | null
+          sync_error?: string | null
+          sync_status?: string
           updated_at?: string
         }
         Relationships: []
@@ -176,46 +215,61 @@ export type Database = {
         Row: {
           cornstarch_photo_url: string | null
           created_at: string
+          deleted_at: string | null
           evaluated_decision: Json | null
           final_decision: Json | null
           glucose_value: number
           id: string
+          last_synced_at: string | null
           meter_photo_url: string | null
           note: string | null
           outcome: string
           patient_id: string
           recorded_at: string
+          sync_error: string | null
+          sync_status: string
           unit: string
+          updated_at: string
           was_overridden: boolean | null
         }
         Insert: {
           cornstarch_photo_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           evaluated_decision?: Json | null
           final_decision?: Json | null
           glucose_value: number
           id?: string
+          last_synced_at?: string | null
           meter_photo_url?: string | null
           note?: string | null
           outcome: string
           patient_id: string
           recorded_at: string
+          sync_error?: string | null
+          sync_status?: string
           unit: string
+          updated_at?: string
           was_overridden?: boolean | null
         }
         Update: {
           cornstarch_photo_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           evaluated_decision?: Json | null
           final_decision?: Json | null
           glucose_value?: number
           id?: string
+          last_synced_at?: string | null
           meter_photo_url?: string | null
           note?: string | null
           outcome?: string
           patient_id?: string
           recorded_at?: string
+          sync_error?: string | null
+          sync_status?: string
           unit?: string
+          updated_at?: string
           was_overridden?: boolean | null
         }
         Relationships: [
@@ -274,33 +328,45 @@ export type Database = {
           actions: Json
           classification: Database["public"]["Enums"]["threshold_rule_classification"]
           created_at: string
+          deleted_at: string | null
           id: string
           label: string
+          last_synced_at: string | null
           max_value: number | null
           min_value: number | null
           patient_id: string
+          sync_error: string | null
+          sync_status: string
           updated_at: string
         }
         Insert: {
           actions?: Json
           classification: Database["public"]["Enums"]["threshold_rule_classification"]
           created_at?: string
+          deleted_at?: string | null
           id?: string
           label: string
+          last_synced_at?: string | null
           max_value?: number | null
           min_value?: number | null
           patient_id: string
+          sync_error?: string | null
+          sync_status?: string
           updated_at?: string
         }
         Update: {
           actions?: Json
           classification?: Database["public"]["Enums"]["threshold_rule_classification"]
           created_at?: string
+          deleted_at?: string | null
           id?: string
           label?: string
+          last_synced_at?: string | null
           max_value?: number | null
           min_value?: number | null
           patient_id?: string
+          sync_error?: string | null
+          sync_status?: string
           updated_at?: string
         }
         Relationships: []

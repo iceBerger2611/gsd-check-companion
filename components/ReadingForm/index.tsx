@@ -1,6 +1,6 @@
 import { DecisionType, FollowupType } from "@/db/schema";
 import { processReading } from "@/lib/readings";
-import { ReadingInsert } from "@/repos/readings.repo";
+import { ReadingInsert } from "@/repos/local/readings.repo";
 import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,6 +21,7 @@ const ReadingForm = ({
   const [reading, setReading] = useState<ReadingInsert>({
     id: Crypto.randomUUID(),
     patientId,
+    unit: "mgdl",
   });
   const [earlyDecision, SetEarlyDecision] = useState<DecisionType | null>(null);
 

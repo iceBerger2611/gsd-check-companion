@@ -7,21 +7,21 @@ import {
   FollowupInsert,
   getFollowupById,
   upsertFollowup,
-} from "@/repos/followups.repo";
+} from "@/repos/local/followups.repo";
 import {
   getReadingById,
   ReadingInsert,
   upsertReading,
-} from "@/repos/readings.repo";
+} from "@/repos/local/readings.repo";
 import {
   listThresholdRulesByPatient,
   ThresholdRuleRow,
-} from "@/repos/thresholdRules";
+} from "@/repos/local/thresholdRules.repo";
+import { runSync } from "@/services/syncService";
 import { addMinutes } from "date-fns";
 import * as Crypto from "expo-crypto";
-import { reseedLocalThresholdRules } from "./ex";
+import equal from "fast-deep-equal";
 import { resolveNextFollowupPlan } from "./utils";
-import equal from 'fast-deep-equal'
 
 export type ReadingPlan = {
   matchedRuleId: string;
@@ -119,9 +119,8 @@ export const convertReadingPlanToReadingAction = (
 export const processReading = async (
   reading: ReadingInsert,
   earlyDecision?: DecisionType,
-  sourceFollowUpId?: string
+  sourceFollowUpId?: string,
 ) => {
-  await reseedLocalThresholdRules("31a4df17-b061-4fbd-898e-cd9f7ef2f64f");
   if (!reading.patientId) return;
 
   const relatedThresholds = await listThresholdRulesByPatient(
@@ -130,16 +129,20 @@ export const processReading = async (
 
   const newReading: ReadingInsert = {
     ...reading,
-    recordedAt: Date().toString(),
+    recordedAt: new Date().toISOString(),
   };
 
   const readingPlan = evaluateReading(newReading, relatedThresholds);
 
   const convertedReadingAction = convertReadingPlanToReadingAction(readingPlan);
 
+  newReading.outcome =
+    readingPlan.nexFollowup.type === "recheck" ? "recheck" : "cornstarch";
+
   newReading.evaluatedDecision = convertedReadingAction || null;
   newReading.finalDecision = earlyDecision || convertedReadingAction || null;
-  newReading.wasOverridden = !!earlyDecision && !equal(earlyDecision, convertedReadingAction);
+  newReading.wasOverridden =
+    !!earlyDecision && !equal(earlyDecision, convertedReadingAction);
 
   const nextFollowupPlan = resolveNextFollowupPlan(readingPlan, earlyDecision);
 
@@ -147,13 +150,14 @@ export const processReading = async (
 
   const newFollowup: FollowupInsert = {
     id: Crypto.randomUUID(),
-    createdAt: new Date().toString(),
-    dueAt: followupDate.toString(),
+    createdAt: new Date().toISOString(),
+    dueAt: followupDate.toISOString(),
     patientId: reading.patientId,
     readingId: reading.id,
     scheduledNotificationIds: [],
     type: nextFollowupPlan.type,
-    updatedAt: new Date().toString(),
+    updatedAt: new Date().toISOString(),
+    status: "pending",
   };
 
   try {
@@ -162,7 +166,13 @@ export const processReading = async (
     const addedReadingRow = await getReadingById(newReading.id);
     const addedFollowupRow = await getFollowupById(newFollowup.id);
     if (sourceFollowUpId) {
-      await completeFollowup(sourceFollowUpId, (new Date().toString()))
+      await completeFollowup(
+        sourceFollowUpId,
+        new Date().toISOString(),
+        addedReadingRow.cornstarchPhotoUrl ||
+          addedReadingRow.meterPhotoUrl ||
+          undefined,
+      );
     }
     const res = await scheduleNextNotifications(
       addedReadingRow,
@@ -179,6 +189,7 @@ export const processReading = async (
       ...addedFollowupRow,
       scheduledNotificationIds: notificationIds,
     });
+    await runSync();
     await dumpDbState();
     return { addedReadingRow, addedFollowupRow };
     // create notifications and followups

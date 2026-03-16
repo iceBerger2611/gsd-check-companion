@@ -2,8 +2,8 @@ import supabase from "@/lib/supabase";
 import { Profile } from "@/types/tables.types";
 import { Session, User } from "@supabase/supabase-js";
 import { identifySupabaseError } from "./utils";
-import { upsertReading } from "@/repos/readings.repo";
 import { Database } from "@/types/database.types";
+import { upsertReading } from "@/repos/local/readings.repo";
 
 interface AuthInRes {
   session: Session | null;
@@ -11,7 +11,7 @@ interface AuthInRes {
   profile: Profile | null;
 }
 
-const handleCatch = (error: unknown) => {
+export const handleCatch = (error: unknown) => {
   const res = identifySupabaseError(error);
   const returnedError = Object.assign(
     new Error(res?.message || "Unknown Error"),

@@ -8,7 +8,25 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
-export type Intervention = "eat_immediately" | "consume_glucose";
+export const SyncCursorKeys = {
+  profiles: "profiles_last_pull",
+  careLinks: "care_links_last_pull",
+  thresholdRules: "threshold_rules_last_pull",
+  readings: "readings_last_pull",
+  followups: "followups_last_pull",
+} as const;
+
+export const SYNC_STATUS = {
+  PENDING: "pending",
+  SYNCED: "synced",
+  FAILED: "failed",
+} as const;
+
+export type SyncStatus = (typeof SYNC_STATUS)[keyof typeof SYNC_STATUS];
+
+export const interventions = ["eat_immediately", "consume_glucose"] as const;
+
+export type Intervention = (typeof interventions)[number];
 
 export const followupTypes = ["recheck", "drink_cornstarch"] as const;
 export type FollowupType = (typeof followupTypes)[number];
@@ -39,6 +57,10 @@ export const profiles = sqliteTable("profiles", {
   displayName: text("display_name"),
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
+  deletedAt: text("deleted_at"),
+  syncStatus: text("sync_status").notNull().default("pending"),
+  lastSyncedAt: text("last_synced_at"),
+  syncError: text("sync_error"),
 });
 
 export const careLinks = sqliteTable(
@@ -53,6 +75,11 @@ export const careLinks = sqliteTable(
     }),
     status: text("status"),
     createdAt: text("created_at"),
+    updatedAt: text("updated_at"),
+    deletedAt: text("deleted_at"),
+    syncStatus: text("sync_status").notNull().default("pending"),
+    lastSyncedAt: text("last_synced_at"),
+    syncError: text("sync_error"),
   },
   (table) => ({
     patientIdx: index("idx_care_links_patient_id").on(table.patientId),
@@ -101,6 +128,11 @@ export const readings = sqliteTable(
       .notNull()
       .default(false),
     createdAt: text("created_at"),
+    updatedAt: text("updated_at"),
+    deletedAt: text("deleted_at"),
+    syncStatus: text("sync_status").notNull().default("pending"),
+    lastSyncedAt: text("last_synced_at"),
+    syncError: text("sync_error"),
   },
   (table) => ({
     patientIdx: index("idx_readings_patient_id").on(table.patientId),
@@ -131,6 +163,10 @@ export const followups = sqliteTable(
     photoUrl: text("photo_url"),
     createdAt: text("created_at"),
     updatedAt: text("updated_at"),
+    deletedAt: text("deleted_at"),
+    syncStatus: text("sync_status").notNull().default("pending"),
+    lastSyncedAt: text("last_synced_at"),
+    syncError: text("sync_error"),
   },
   (table) => ({
     readingIdx: index("idx_followups_reading_id").on(table.readingId),
@@ -175,6 +211,10 @@ export const thresholdRules = sqliteTable(
     actions: text("actions", { mode: "json" }).$type<Action[]>(),
     createdAt: text("created_at"),
     updatedAt: text("updated_at"),
+    deletedAt: text("deleted_at"),
+    syncStatus: text("sync_status").notNull().default("pending"),
+    lastSyncedAt: text("last_synced_at"),
+    syncError: text("sync_error"),
   },
   (table) => ({
     patientIdx: index("idx_threshold_rules_patient_id").on(table.patientId),
@@ -192,3 +232,9 @@ export const thresholdRules = sqliteTable(
     ),
   }),
 );
+
+export const syncState = sqliteTable("sync_state", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+  updatedAt: text("updated_at").notNull(),
+});

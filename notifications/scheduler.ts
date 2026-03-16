@@ -1,6 +1,6 @@
 import { FollowupType } from "@/db/schema";
-import { FollowupRow } from "@/repos/followups.repo";
-import { ReadingRow } from "@/repos/readings.repo";
+import { FollowupRow } from "@/repos/local/followups.repo";
+import { ReadingRow } from "@/repos/local/readings.repo";
 import { addMinutes } from "date-fns";
 import {
   SchedulableTriggerInputTypes,

@@ -1,5 +1,6 @@
 import { GetUserProfile } from "@/db/operations";
 import supabase from "@/lib/supabase";
+import { runSync } from "@/services/syncService";
 import { ErrorBoundaryProps, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
@@ -24,10 +25,16 @@ export default function Index() {
       if (id) {
         const res = await GetUserProfile(id);
         if (res && !(res instanceof Error)) {
-          if (res.role === "supervisor") {
-            router.navigate(`/(supervisor)/dashboard`);
+          await runSync();
+          const refreshed = await GetUserProfile(id);
+          if (refreshed instanceof Error) {
+            await supabase.auth.signOut();
           } else {
-            router.navigate(`/(patient)`);
+            if (res.role === "supervisor") {
+              router.navigate(`/(supervisor)/dashboard`);
+            } else {
+              router.navigate(`/(patient)`);
+            }
           }
         } else {
           await supabase.auth.signOut();

@@ -3,7 +3,7 @@ import { useGetProfile } from "@/hooks/profile";
 import {
   listThresholdRulesByPatient,
   ThresholdRuleRow,
-} from "@/repos/thresholdRules";
+} from "@/repos/local/thresholdRules.repo";
 import { useEffect, useState } from "react";
 import {
   Keyboard,
@@ -14,6 +14,7 @@ import {
 import {
   ActivityIndicator,
   Divider,
+  List,
   Text,
   TextInput,
 } from "react-native-paper";
@@ -22,6 +23,7 @@ const PatientSettings = () => {
   const { isFetching, profile: patient } = useGetProfile();
   const [displayName, setDispalyName] = useState(patient?.display_name);
   const [thresholdRules, setThresholdRules] = useState<ThresholdRuleRow[]>([]);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (patient?.display_name) {
@@ -38,6 +40,7 @@ const PatientSettings = () => {
       fetchThresh(patient.id);
     }
   }, [patient?.id]);
+
   return (
     <View
       style={{
@@ -65,20 +68,25 @@ const PatientSettings = () => {
               value={displayName || undefined}
               onChangeText={(text) => setDispalyName(text)}
             />
-            <View style={{ gap: 10, paddingTop: 20 }}>
-              <View style={{ alignItems: "center" }}>
-                <Text variant="headlineSmall">Thresholds</Text>
-              </View>
-              {thresholdRules.map((thresholdRule) => (
-                <View key={thresholdRule.id}>
-                  <Divider bold />
-                  <ThresholdRuleInput
-                    key={thresholdRule.id}
-                    threshold={thresholdRule}
-                  />
+            <List.Section>
+              <List.Accordion
+                title="Thresholds"
+                expanded={expanded}
+                onPress={() => setExpanded((prev) => !prev)}
+              >
+                <View style={{ gap: 10, paddingTop: 20 }}>
+                  {thresholdRules.map((thresholdRule) => (
+                    <View key={thresholdRule.id}>
+                      <Divider bold />
+                      <ThresholdRuleInput
+                        key={thresholdRule.id}
+                        threshold={thresholdRule}
+                      />
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              </List.Accordion>
+            </List.Section>
           </ScrollView>
         </TouchableWithoutFeedback>
       )}

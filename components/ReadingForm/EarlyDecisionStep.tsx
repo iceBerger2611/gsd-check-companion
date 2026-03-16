@@ -6,9 +6,7 @@ import { createValueLabel, getDecisionOptions, StepFuncProps } from "./utils";
 
 const EarlyDecisionStep = ({
   followup,
-  currStep,
   reading,
-  setReading,
   setEarlyDecision,
   earlyDecision,
 }: StepFuncProps) => {
@@ -53,9 +51,8 @@ const EarlyDecisionStep = ({
   return (
     <View
       style={{
-        gap: 30,
+        gap: 10,
         justifyContent: "center",
-        alignItems: "center",
       }}
     >
       <Text variant="headlineSmall" style={{ alignContent: "space-between" }}>
@@ -71,7 +68,6 @@ const EarlyDecisionStep = ({
           inputMode="numeric"
           label="minutes"
           mode="outlined"
-          style={{ width: "50%", height: "50%" }}
           onChangeText={onMinutesChange}
           value={currMinutes?.toString() || undefined}
         />

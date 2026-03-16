@@ -1,6 +1,6 @@
 import { DecisionType, FollowupType, Intervention } from "@/db/schema";
 import supabase from "@/lib/supabase";
-import { ReadingInsert } from "@/repos/readings.repo";
+import { ReadingInsert } from "@/repos/local/readings.repo";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import { View } from "react-native";
@@ -204,7 +204,10 @@ export const getSteps = (
               mode="outlined"
               onPress={() =>
                 isLastStep
-                  ? onFinish({ ...reading, createdAt: new Date().toString() })
+                  ? onFinish({
+                      ...reading,
+                      createdAt: new Date().toISOString(),
+                    })
                   : setCurrStep(currStep + 1)
               }
             >

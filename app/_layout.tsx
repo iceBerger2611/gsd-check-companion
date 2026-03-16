@@ -1,7 +1,9 @@
 import { initLocalDB } from "@/db/init";
+import { store } from "@/hooks/sync";
 import { appTheme } from "@/lib/theme";
 import { useNotificationRouting } from "@/notifications/listeners";
 import { Stack } from "expo-router";
+import { Provider as JotaiProvider } from "jotai";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
 import Toast from "react-native-toast-message";
@@ -14,13 +16,15 @@ export default function RootLayout() {
   useNotificationRouting();
 
   return (
-    <PaperProvider theme={appTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(patient)" />
-        <Stack.Screen name="(supervisor)" />
-      </Stack>
-      <Toast position="bottom" />
-    </PaperProvider>
+    <JotaiProvider store={store}>
+      <PaperProvider theme={appTheme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(patient)" />
+          <Stack.Screen name="(supervisor)" />
+        </Stack>
+        <Toast position="bottom" />
+      </PaperProvider>
+    </JotaiProvider>
   );
 }

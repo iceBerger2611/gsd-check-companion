@@ -1,6 +1,6 @@
 import { db } from "@/db/client";
 import { thresholdRules } from "@/db/schema";
-import type { ThresholdRuleInsert } from "@/repos/thresholdRules";
+import { ThresholdRuleInsert } from "@/repos/local/thresholdRules.repo";
 import { eq } from "drizzle-orm";
 import * as Crypto from "expo-crypto";
 

@@ -1,4 +1,4 @@
-import { listReadingsByPatient, ReadingRow } from "@/repos/readings.repo";
+import { listReadingsByPatient, ReadingRow } from "@/repos/local/readings.repo";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { View } from "react-native";

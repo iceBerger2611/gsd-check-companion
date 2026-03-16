@@ -7,7 +7,6 @@ import { createPhotoPath, StepFuncProps } from "./utils";
 
 const CornPhotoStep = ({
   followup,
-  currStep,
   reading,
   setReading,
   setPhotoUri,

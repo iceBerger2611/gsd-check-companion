@@ -24,7 +24,11 @@ export async function initLocalDB() {
       role TEXT,
       display_name TEXT,
       created_at TEXT,
-      updated_at TEXT
+      updated_at TEXT,
+      deleted_at TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed')),
+      last_synced_at TEXT,
+      sync_error TEXT
     );
   `);
 
@@ -35,6 +39,11 @@ export async function initLocalDB() {
       supervisor_id TEXT,
       status TEXT,
       created_at TEXT,
+      updated_at TEXT,
+      deleted_at TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed')),
+      last_synced_at TEXT,
+      sync_error TEXT,
       FOREIGN KEY (patient_id) REFERENCES profiles(id) ON DELETE CASCADE,
       FOREIGN KEY (supervisor_id) REFERENCES profiles(id) ON DELETE CASCADE
     );
@@ -67,6 +76,11 @@ export async function initLocalDB() {
       final_decision TEXT,
       was_overridden INTEGER NOT NULL DEFAULT 0,
       created_at TEXT,
+      updated_at TEXT,
+      deleted_at TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed')),
+      last_synced_at TEXT,
+      sync_error TEXT,
       FOREIGN KEY (patient_id) REFERENCES profiles(id) ON DELETE CASCADE
     );
   `);
@@ -85,6 +99,10 @@ export async function initLocalDB() {
       photo_url TEXT,
       created_at TEXT,
       updated_at TEXT,
+      deleted_at TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed')),
+      last_synced_at TEXT,
+      sync_error TEXT,
       FOREIGN KEY (reading_id) REFERENCES readings(id) ON DELETE CASCADE,
       FOREIGN KEY (patient_id) REFERENCES profiles(id) ON DELETE CASCADE
     );
@@ -117,10 +135,27 @@ export async function initLocalDB() {
       actions TEXT,
       created_at TEXT,
       updated_at TEXT,
+      deleted_at TEXT,
+      sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed')),
+      last_synced_at TEXT,
+      sync_error TEXT,
       FOREIGN KEY (patient_id) REFERENCES profiles(id) ON DELETE CASCADE,
       CHECK (min_value IS NOT NULL OR max_value IS NOT NULL),
       CHECK (min_value IS NULL OR max_value IS NULL OR min_value <= max_value)
     );
+  `);
+
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS sync_state (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
+  await db.run(`
+    CREATE INDEX IF NOT EXISTS idx_sync_state_updated_at
+    ON sync_state(updated_at);
   `);
 
   await db.run(`
@@ -177,4 +212,79 @@ export async function initLocalDB() {
     CREATE INDEX IF NOT EXISTS idx_threshold_rules_patient_id
     ON threshold_rules(patient_id);
   `);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_profiles_sync_status
+  ON profiles(sync_status);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_profiles_updated_at
+  ON profiles(updated_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_profiles_deleted_at
+  ON profiles(deleted_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_readings_sync_status
+  ON readings(sync_status);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_readings_updated_at
+  ON readings(updated_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_readings_deleted_at
+  ON readings(deleted_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_followups_sync_status
+  ON followups(sync_status);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_followups_updated_at
+  ON followups(updated_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_followups_deleted_at
+  ON followups(deleted_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_threshold_rules_sync_status
+  ON threshold_rules(sync_status);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_threshold_rules_updated_at
+  ON threshold_rules(updated_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_threshold_rules_deleted_at
+  ON threshold_rules(deleted_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_care_links_sync_status
+  ON care_links(sync_status);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_care_links_updated_at
+  ON care_links(updated_at);
+`);
+
+  await db.run(`
+  CREATE INDEX IF NOT EXISTS idx_care_links_deleted_at
+  ON care_links(deleted_at);
+`);
 }

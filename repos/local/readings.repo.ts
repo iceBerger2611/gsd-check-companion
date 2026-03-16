@@ -1,7 +1,12 @@
 import { db } from "@/db/client";
 import { mapDbError, NotFoundError } from "@/db/errors";
 import { readings } from "@/db/schema";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import {
+  buildPendingCreateFields,
+  buildPendingUpdateFields,
+  nowIso,
+} from "../utils";
 
 export type ReadingRow = typeof readings.$inferSelect;
 export type ReadingInsert = typeof readings.$inferInsert;
@@ -22,6 +27,18 @@ export const getReadingById = async (id: string): Promise<ReadingRow> => {
   }
 };
 
+export const getReadingByIdSafe = async (
+  id: string,
+): Promise<ReadingRow | null> => {
+  try {
+    const result = await getReadingById(id);
+    return result;
+  } catch (error) {
+    console.log(mapDbError(error, "falied to get reading"));
+    return null;
+  }
+};
+
 export const listReadingsByPatient = async (
   patientId: string,
 ): Promise<ReadingRow[]> => {
@@ -31,6 +48,18 @@ export const listReadingsByPatient = async (
       .from(readings)
       .where(eq(readings.patientId, patientId))
       .orderBy(desc(readings.recordedAt));
+    return results;
+  } catch (error) {
+    throw mapDbError(error, "failed to get readings");
+  }
+};
+
+export const listPendingReadings = async (): Promise<ReadingRow[]> => {
+  try {
+    const results = await db
+      .select()
+      .from(readings)
+      .where(inArray(readings.syncStatus, ["pending", "failed"]));
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get readings");
@@ -83,11 +112,35 @@ export const upsertReading = async (reading: ReadingInsert): Promise<void> => {
   try {
     await db
       .insert(readings)
-      .values(reading)
-      .onConflictDoUpdate({ target: readings.id, set: reading });
+      .values({ ...reading, ...buildPendingCreateFields() })
+      .onConflictDoUpdate({
+        target: readings.id,
+        set: { ...reading, ...buildPendingUpdateFields() },
+      });
   } catch (error) {
     console.log(error);
     throw mapDbError(error, "failed to upsert reading");
+  }
+};
+
+export const upsertReadingFromRemote = async (
+  reading: ReadingInsert,
+): Promise<void> => {
+  try {
+    await db
+      .insert(readings)
+      .values(reading)
+      .onConflictDoUpdate({
+        target: readings.id,
+        set: {
+          ...reading,
+          syncStatus: "synced",
+          lastSyncedAt: reading.lastSyncedAt,
+          syncError: null,
+        },
+      });
+  } catch (error) {
+    throw mapDbError(error, "failed to upsert reading from remote");
   }
 };
 
@@ -96,8 +149,36 @@ export const updateReadingOutcome = async (
   outcome: ReadingRow["outcome"],
 ): Promise<void> => {
   try {
-    await db.update(readings).set({ outcome }).where(eq(readings.id, id));
+    await db
+      .update(readings)
+      .set({ outcome, ...buildPendingUpdateFields() })
+      .where(eq(readings.id, id));
   } catch (error) {
     throw mapDbError(error, "failed to update reading outcome");
+  }
+};
+
+export const markReadingSynced = async (id: string): Promise<void> => {
+  try {
+    await db
+      .update(readings)
+      .set({ syncStatus: "synced", lastSyncedAt: nowIso(), syncError: null })
+      .where(eq(readings.id, id));
+  } catch (error) {
+    throw mapDbError(error, "failed to update reading");
+  }
+};
+
+export const markReadingFailed = async (
+  id: string,
+  error: string,
+): Promise<void> => {
+  try {
+    await db
+      .update(readings)
+      .set({ syncStatus: "failed", syncError: error })
+      .where(eq(readings.id, id));
+  } catch (error) {
+    throw mapDbError(error, "failed to update reading");
   }
 };

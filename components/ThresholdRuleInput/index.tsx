@@ -1,4 +1,7 @@
-import { ThresholdRuleRow, upsertThreshold } from "@/repos/thresholdRules";
+import {
+  ThresholdRuleRow,
+  upsertThreshold,
+} from "@/repos/local/thresholdRules.repo";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button } from "react-native-paper";

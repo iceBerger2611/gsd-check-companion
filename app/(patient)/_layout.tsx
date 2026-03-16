@@ -1,5 +1,6 @@
 import supabase from "@/lib/supabase";
 import { appTheme } from "@/lib/theme";
+import { runSync } from "@/services/syncService";
 import { NativeStackHeaderProps } from "@react-navigation/native-stack";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
@@ -24,13 +25,17 @@ const PatientHeader = ({
     router.push("/(patient)/settings");
   };
 
+  const onSync = async () => {
+    await runSync();
+  };
+
   return (
     <Appbar.Header
       mode="small"
       elevated
       style={{ backgroundColor: appTheme.colors.surface }}
     >
-      {router.canDismiss() && !route.name.includes('index') && (
+      {router.canDismiss() && !route.name.includes("index") && (
         <Appbar.BackAction onPress={() => router.dismiss()} />
       )}
       <Appbar.Content title="" />
@@ -46,6 +51,7 @@ const PatientHeader = ({
       >
         <Menu.Item onPress={onLogout} title="Logout" />
         <Menu.Item onPress={onSettings} title="Settings" />
+        <Menu.Item onPress={onSync} title="Sync" />
       </Menu>
     </Appbar.Header>
   );
