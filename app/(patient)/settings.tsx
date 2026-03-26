@@ -1,9 +1,11 @@
 import ThresholdRuleInput from "@/components/ThresholdRuleInput";
 import { useGetProfile } from "@/hooks/profile";
+import { upsertProfile } from "@/repos/local/profiles.repo";
 import {
   listThresholdRulesByPatient,
   ThresholdRuleRow,
 } from "@/repos/local/thresholdRules.repo";
+import { runSync } from "@/services/syncService";
 import { useEffect, useState } from "react";
 import {
   Keyboard,
@@ -13,23 +15,35 @@ import {
 } from "react-native";
 import {
   ActivityIndicator,
+  Button,
   Divider,
   List,
   Text,
   TextInput,
 } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 const PatientSettings = () => {
   const { isFetching, profile: patient } = useGetProfile();
-  const [displayName, setDispalyName] = useState(patient?.display_name);
+  const [displayName, setDispalyName] = useState(patient?.displayName);
   const [thresholdRules, setThresholdRules] = useState<ThresholdRuleRow[]>([]);
   const [expanded, setExpanded] = useState(false);
 
+  const onDisplaySave = async () => {
+    if (!patient || !displayName) return;
+    await upsertProfile({ ...patient, displayName });
+    Toast.show({
+      type: "success",
+      text1: "name updated successfully",
+    });
+    await runSync();
+  };
+
   useEffect(() => {
-    if (patient?.display_name) {
-      setDispalyName(patient.display_name);
+    if (patient?.displayName) {
+      setDispalyName(patient.displayName);
     }
-  }, [patient?.display_name]);
+  }, [patient?.displayName]);
 
   useEffect(() => {
     const fetchThresh = async (patientId: string) => {
@@ -68,6 +82,11 @@ const PatientSettings = () => {
               value={displayName || undefined}
               onChangeText={(text) => setDispalyName(text)}
             />
+            {patient?.displayName !== displayName && (
+              <Button uppercase mode="contained" onPress={onDisplaySave}>
+                SAVE
+              </Button>
+            )}
             <List.Section>
               <List.Accordion
                 title="Thresholds"

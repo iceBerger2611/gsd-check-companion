@@ -1,5 +1,5 @@
 import { PushPendingResult } from "@/db/sync";
-import { atom, createStore } from "jotai";
+import { atom } from "jotai";
 
 export type RunSyncResult = {
   pushed: PushPendingResult;
@@ -22,5 +22,3 @@ export const SyncStateAtom = atom<SyncState>({
   lastSyncError: null,
   lastSyncResult: null,
 });
-
-export const store = createStore();

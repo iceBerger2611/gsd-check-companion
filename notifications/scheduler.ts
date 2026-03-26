@@ -5,11 +5,8 @@ import { addMinutes } from "date-fns";
 import {
   SchedulableTriggerInputTypes,
   scheduleNotificationAsync,
+  cancelScheduledNotificationAsync
 } from "expo-notifications";
-
-//TODO immediately! : when processicg a reading take two paths:
-// 1. check (already done) 2. drink cornstarch.
-// in each scenario create a followup in the relevant time (3h or followup delay or calculate intervention)
 
 export type NotificationData = {
   followup: FollowupType;

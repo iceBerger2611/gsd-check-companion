@@ -49,30 +49,30 @@ export function nowIso() {
 export function buildPendingCreateFields() {
   const now = nowIso();
   return {
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-    sync_status: "pending" as const,
-    last_synced_at: null,
-    sync_error: null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    syncStatus: "pending" as const,
+    lastSyncedAt: null,
+    syncError: null,
   };
 }
 
 export function buildPendingUpdateFields() {
   return {
-    updated_at: nowIso(),
-    sync_status: "pending" as const,
-    sync_error: null,
+    updatedAt: nowIso(),
+    syncStatus: "pending" as const,
+    syncError: null,
   };
 }
 
 export function buildPendingDeleteFields() {
   const now = nowIso();
   return {
-    deleted_at: now,
-    updated_at: now,
-    sync_status: "pending" as const,
-    sync_error: null,
+    deletedAt: now,
+    updatedAt: now,
+    syncStatus: "pending" as const,
+    syncError: null,
   };
 }
 

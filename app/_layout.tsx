@@ -1,7 +1,7 @@
 import { initLocalDB } from "@/db/init";
-import { store } from "@/hooks/sync";
 import { appTheme } from "@/lib/theme";
 import { useNotificationRouting } from "@/notifications/listeners";
+import { store } from "@/store";
 import { Stack } from "expo-router";
 import { Provider as JotaiProvider } from "jotai";
 import { useEffect } from "react";

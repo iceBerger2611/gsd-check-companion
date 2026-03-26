@@ -9,9 +9,9 @@ const RecentHistory = ({ patientId }: { patientId: string }) => {
 
   useEffect(() => {
     const fetchReadings = async (patientId: string) => {
-      const fetchedReadings = await listReadingsByPatient(patientId);
+      const fetchedReadings = await listReadingsByPatient(patientId, 4);
       if (fetchedReadings.length) {
-        setReadings(fetchedReadings.slice(0, 4));
+        setReadings(fetchedReadings);
       }
     };
 
@@ -19,8 +19,11 @@ const RecentHistory = ({ patientId }: { patientId: string }) => {
   }, [patientId]);
 
   return (
-    <View style={{ padding: 30, paddingTop: 80 }}>
-      <View style={{ alignItems: 'center' }}><Text variant="headlineSmall">RECENT HISTORY</Text></View>
+    <View>
+      <View style={{ alignItems: "center" }}>
+        <Text variant="headlineSmall">RECENT HISTORY</Text>
+      </View>
+      <View style={{ paddingLeft: 50 }}>
       <DataTable>
         <DataTable.Header>
           <DataTable.Title>Value</DataTable.Title>
@@ -29,7 +32,7 @@ const RecentHistory = ({ patientId }: { patientId: string }) => {
         </DataTable.Header>
         {readings?.map((reading) => (
           <DataTable.Row key={reading.id}>
-            <DataTable.Cell>{reading.glucoseValue}</DataTable.Cell>
+            <DataTable.Cell>{reading.glucoseValue || 'Cornstarch'}</DataTable.Cell>
             <DataTable.Cell>
               {reading.recordedAt
                 ? format(new Date(reading.recordedAt), "d/M/y")
@@ -37,13 +40,14 @@ const RecentHistory = ({ patientId }: { patientId: string }) => {
             </DataTable.Cell>
             <DataTable.Cell>
               {reading.recordedAt
-                ? format(new Date(reading.recordedAt), "H:mm:ss")
+                ? format(new Date(reading.recordedAt), "H:mm")
                 : ""}
             </DataTable.Cell>
           </DataTable.Row>
         ))}
       </DataTable>
-      <Button mode="contained-tonal">SHOW ALL</Button>
+      <Button mode="contained-tonal" style={{ marginRight: 50 }}>SHOW ALL</Button>
+      </View>
     </View>
   );
 };

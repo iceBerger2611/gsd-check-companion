@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      care_link_invites: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          patient_id: string
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          patient_id: string
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          patient_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_link_invites_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_links: {
         Row: {
           created_at: string
@@ -376,7 +411,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_care_link_invite: {
+        Args: { p_code: string }
+        Returns: {
+          care_link_id: string
+          patient_id: string
+          supervisor_id: string
+        }[]
+      }
+      create_care_link_invite: {
+        Args: { p_expires_in_minutes?: number }
+        Returns: {
+          code: string
+          expires_at: string
+          invite_id: string
+        }[]
+      }
+      generate_care_link_invite_code: { Args: never; Returns: string }
     }
     Enums: {
       decision_type: "recheck" | "drink_cornstarch" | "none"

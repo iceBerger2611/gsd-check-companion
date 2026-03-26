@@ -1,4 +1,6 @@
 import {
+  CareLinkInsert,
+  CareLinkRow,
   getCareLinkByIdSafe,
   listPendingCareLinks,
   markCareLinkFailed,
@@ -6,6 +8,8 @@ import {
   upsertCareLinkFromRemote,
 } from "@/repos/local/careLinks.repo";
 import {
+  FollowupInsert,
+  FollowupRow,
   getFollowupByIdSafe,
   listPendingFollowups,
   markFollowupFailed,
@@ -17,6 +21,8 @@ import {
   listPendingProfiles,
   markProfileFailed,
   markProfileSynced,
+  ProfileInsert,
+  ProfileRow,
   upsertProfileFromRemote,
 } from "@/repos/local/profiles.repo";
 import {
@@ -24,6 +30,8 @@ import {
   listPendingReadings,
   markReadingFailed,
   markReadingSynced,
+  ReadingInsert,
+  ReadingRow,
   upsertReadingFromRemote,
 } from "@/repos/local/readings.repo";
 import { getSyncCursor, setSyncCursor } from "@/repos/local/syncState.repo";
@@ -32,6 +40,8 @@ import {
   listPendingThresholdRules,
   markThresholdRuleFailed,
   markThresholdRuleSynced,
+  ThresholdRuleInsert,
+  ThresholdRuleRow,
   upsertThresholdRuleFromRemote,
 } from "@/repos/local/thresholdRules.repo";
 import {
@@ -66,7 +76,13 @@ import {
   mapRemoteProfileToLocal,
   mapRemoteReadingToLocal,
   mapRemoteThresholdRuleToLocal,
+  RemoteCareLinkUpsertPayload,
+  RemoteFollowupUpsertPayload,
+  RemoteProfileUpsertPayload,
+  RemoteReadingUpsertPayload,
+  RemoteThresholdRuleUpsertPayload,
 } from "@/repos/utils";
+import { Database } from "@/types/database.types";
 import { SyncCursorKeys } from "./schema";
 
 export type PushPendingResult = {
@@ -75,84 +91,42 @@ export type PushPendingResult = {
   failed: number;
 };
 
-export const pushPendingReadings = async (): Promise<PushPendingResult> => {
-  const pendingRows = await listPendingReadings();
-
-  const result: PushPendingResult = {
-    attempted: 0,
-    failed: 0,
-    succeeded: 0,
-  };
-
-  for (const row of pendingRows) {
-    result.attempted++;
-    try {
-      const payload = mapLocalReadingToRemote(row);
-      await upsertRemoteReading(payload);
-      result.succeeded++;
-      await markReadingSynced(row.id);
-    } catch (error) {
-      result.failed++;
-      await markReadingFailed(row.id, getErrorMessage(error));
-    }
-  }
-
-  return result;
+type PushPendingRowOptions<TLocalRow extends { id: string }, TRemoteRow> = {
+  listPendingRows: () => Promise<TLocalRow[]>;
+  mapLocalRowToRemote: (row: TLocalRow) => TRemoteRow;
+  upsertRemoteRow: (row: TRemoteRow) => Promise<void>;
+  markRowSynced: (id: string) => Promise<void>;
+  markRowFailed: (id: string, error: string) => Promise<void>;
 };
 
-export const pushPendingFollowups = async (): Promise<PushPendingResult> => {
-  const pendingRows = await listPendingFollowups();
-
-  const result: PushPendingResult = {
-    attempted: 0,
-    failed: 0,
-    succeeded: 0,
-  };
-
-  for (const row of pendingRows) {
-    result.attempted++;
-    try {
-      const payload = mapLocalFollowupToRemote(row);
-      await upsertRemoteFollowup(payload);
-      result.succeeded++;
-      await markFollowupSynced(row.id);
-    } catch (error) {
-      result.failed++;
-      await markFollowupFailed(row.id, getErrorMessage(error));
-    }
-  }
-
-  return result;
+type PullRowsOptions<
+  TLocalRow extends { syncStatus: string; updatedAt: string | null },
+  TLocalRowInsert extends { id: string },
+  TRemoteRow extends { id: string; updated_at: string },
+> = {
+  syncCursorKey: string;
+  fetchRemoteRowsChangedSince: (
+    lastPulledAt: string | null,
+  ) => Promise<TRemoteRow[]>;
+  getRowByIdSafe: (id: string) => Promise<TLocalRow | null>;
+  upsertRowFromRemote: (row: TLocalRowInsert) => Promise<void>;
+  mapRemoteRowToLocal: (row: TRemoteRow) => TLocalRowInsert;
 };
 
-export const pushPendingThresholdRules =
-  async (): Promise<PushPendingResult> => {
-    const pendingRows = await listPendingThresholdRules();
-
-    const result: PushPendingResult = {
-      attempted: 0,
-      failed: 0,
-      succeeded: 0,
-    };
-
-    for (const row of pendingRows) {
-      result.attempted++;
-      try {
-        const payload = mapLocalThresholdRuleToRemote(row);
-        await upsertRemoteThresholdRule(payload);
-        result.succeeded++;
-        await markThresholdRuleSynced(row.id);
-      } catch (error) {
-        result.failed++;
-        await markThresholdRuleFailed(row.id, getErrorMessage(error));
-      }
-    }
-
-    return result;
-  };
-
-export const pushPendingCareLinks = async (): Promise<PushPendingResult> => {
-  const pendingRows = await listPendingCareLinks();
+export const pushPendingRows = async <
+  TLocalRow extends { id: string },
+  TRemoteRow,
+>({
+  listPendingRows,
+  mapLocalRowToRemote,
+  markRowFailed,
+  markRowSynced,
+  upsertRemoteRow,
+}: PushPendingRowOptions<
+  TLocalRow,
+  TRemoteRow
+>): Promise<PushPendingResult> => {
+  const pendingRows = await listPendingRows();
 
   const result: PushPendingResult = {
     attempted: 0,
@@ -163,38 +137,13 @@ export const pushPendingCareLinks = async (): Promise<PushPendingResult> => {
   for (const row of pendingRows) {
     result.attempted++;
     try {
-      const payload = mapLocalCareLinkToRemote(row);
-      await upsertRemoteCareLink(payload);
+      const payload = mapLocalRowToRemote(row);
+      await upsertRemoteRow(payload);
       result.succeeded++;
-      await markCareLinkSynced(row.id);
+      await markRowSynced(row.id);
     } catch (error) {
       result.failed++;
-      await markCareLinkFailed(row.id, getErrorMessage(error));
-    }
-  }
-
-  return result;
-};
-
-export const pushPendingProfiles = async (): Promise<PushPendingResult> => {
-  const pendingRows = await listPendingProfiles();
-
-  const result: PushPendingResult = {
-    attempted: 0,
-    failed: 0,
-    succeeded: 0,
-  };
-
-  for (const row of pendingRows) {
-    result.attempted++;
-    try {
-      const payload = mapLocalProfileToRemote(row);
-      await upsertRemoteProfile(payload);
-      result.succeeded++;
-      await markProfileSynced(row.id);
-    } catch (error) {
-      result.failed++;
-      await markProfileFailed(row.id, getErrorMessage(error));
+      await markRowFailed(row.id, getErrorMessage(error));
     }
   }
 
@@ -208,16 +157,61 @@ export const pushPendingChanges = async (): Promise<PushPendingResult> => {
     succeeded: 0,
   };
 
-  const profileResults = await pushPendingProfiles();
-  const careLinkResults = await pushPendingCareLinks();
-  //const thresholdRuleResults = await pushPendingThresholdRules();
-  const readingResults = await pushPendingReadings();
-  const followupResults = await pushPendingFollowups();
+  const profileResults = await pushPendingRows<
+    ProfileRow,
+    RemoteProfileUpsertPayload
+  >({
+    listPendingRows: listPendingProfiles,
+    mapLocalRowToRemote: mapLocalProfileToRemote,
+    markRowFailed: markProfileFailed,
+    markRowSynced: markProfileSynced,
+    upsertRemoteRow: upsertRemoteProfile,
+  });
+  const careLinkResults = await pushPendingRows<
+    CareLinkRow,
+    RemoteCareLinkUpsertPayload
+  >({
+    listPendingRows: listPendingCareLinks,
+    mapLocalRowToRemote: mapLocalCareLinkToRemote,
+    markRowFailed: markCareLinkFailed,
+    markRowSynced: markCareLinkSynced,
+    upsertRemoteRow: upsertRemoteCareLink,
+  });
+  const thresholdRuleResults = await pushPendingRows<
+    ThresholdRuleRow,
+    RemoteThresholdRuleUpsertPayload
+  >({
+    listPendingRows: listPendingThresholdRules,
+    mapLocalRowToRemote: mapLocalThresholdRuleToRemote,
+    markRowFailed: markThresholdRuleFailed,
+    markRowSynced: markThresholdRuleSynced,
+    upsertRemoteRow: upsertRemoteThresholdRule,
+  });
+  const readingResults = await pushPendingRows<
+    ReadingRow,
+    RemoteReadingUpsertPayload
+  >({
+    listPendingRows: listPendingReadings,
+    mapLocalRowToRemote: mapLocalReadingToRemote,
+    markRowFailed: markReadingFailed,
+    markRowSynced: markReadingSynced,
+    upsertRemoteRow: upsertRemoteReading,
+  });
+  const followupResults = await pushPendingRows<
+    FollowupRow,
+    RemoteFollowupUpsertPayload
+  >({
+    listPendingRows: listPendingFollowups,
+    mapLocalRowToRemote: mapLocalFollowupToRemote,
+    markRowFailed: markFollowupFailed,
+    markRowSynced: markFollowupSynced,
+    upsertRemoteRow: upsertRemoteFollowup,
+  });
 
   const results = [
     profileResults,
     careLinkResults,
-    //thresholdRuleResults,
+    thresholdRuleResults,
     readingResults,
     followupResults,
   ];
@@ -231,18 +225,32 @@ export const pushPendingChanges = async (): Promise<PushPendingResult> => {
   return finalResult;
 };
 
-export const pullProfiles = async (): Promise<number> => {
-  const lastPulledAt = await getSyncCursor(SyncCursorKeys.profiles);
-  const remoteRows = await fetchRemoteProfilesChangedSince(lastPulledAt);
+export const pullRows = async <
+  TLocalRow extends { syncStatus: string; updatedAt: string | null },
+  TLocalRowInsert extends { id: string },
+  TRemoteRow extends { id: string; updated_at: string },
+>({
+  syncCursorKey,
+  fetchRemoteRowsChangedSince,
+  getRowByIdSafe,
+  mapRemoteRowToLocal,
+  upsertRowFromRemote,
+}: PullRowsOptions<
+  TLocalRow,
+  TLocalRowInsert,
+  TRemoteRow
+>): Promise<number> => {
+  const lastPulledAt = await getSyncCursor(syncCursorKey);
+  const remoteRows = await fetchRemoteRowsChangedSince(lastPulledAt);
 
   let applied = 0;
   let maxUpdatedAt = lastPulledAt;
 
   for (const remoteRow of remoteRows) {
-    const localRow = await getProfileByIdSafe(remoteRow.id);
+    const localRow = await getRowByIdSafe(remoteRow.id);
 
     if (!localRow) {
-      await upsertProfileFromRemote(mapRemoteProfileToLocal(remoteRow));
+      await upsertRowFromRemote(mapRemoteRowToLocal(remoteRow));
       applied++;
 
       if (!maxUpdatedAt || remoteRow.updated_at > maxUpdatedAt) {
@@ -259,7 +267,7 @@ export const pullProfiles = async (): Promise<number> => {
     const remoteUpdatedAt = remoteRow.updated_at ?? "";
 
     if (remoteUpdatedAt > localUpdatedAt) {
-      await upsertProfileFromRemote(mapRemoteProfileToLocal(remoteRow));
+      await upsertRowFromRemote(mapRemoteRowToLocal(remoteRow));
       applied++;
     }
 
@@ -272,214 +280,72 @@ export const pullProfiles = async (): Promise<number> => {
   }
 
   if (maxUpdatedAt) {
-    await setSyncCursor(SyncCursorKeys.profiles, maxUpdatedAt);
-  }
-
-  return applied;
-};
-
-export const pullCareLinks = async (): Promise<number> => {
-  const lastPulledAt = await getSyncCursor(SyncCursorKeys.careLinks);
-  const remoteRows = await fetchRemoteCareLinksChangedSince(lastPulledAt);
-
-  let applied = 0;
-  let maxUpdatedAt = lastPulledAt;
-
-  for (const remoteRow of remoteRows) {
-    const localRow = await getCareLinkByIdSafe(remoteRow.id);
-
-    if (!localRow) {
-      await upsertCareLinkFromRemote(mapRemoteCareLinkToLocal(remoteRow));
-      applied++;
-
-      if (!maxUpdatedAt || remoteRow.updated_at > maxUpdatedAt) {
-        maxUpdatedAt = remoteRow.updated_at;
-      }
-      continue;
-    }
-
-    if (localRow.syncStatus === "pending") {
-      continue;
-    }
-
-    const localUpdatedAt = localRow.updatedAt ?? "";
-    const remoteUpdatedAt = remoteRow.updated_at ?? "";
-
-    if (remoteUpdatedAt > localUpdatedAt) {
-      await upsertCareLinkFromRemote(mapRemoteCareLinkToLocal(remoteRow));
-      applied++;
-    }
-
-    if (
-      !maxUpdatedAt ||
-      (remoteRow.updated_at && remoteRow.updated_at > maxUpdatedAt)
-    ) {
-      maxUpdatedAt = remoteRow.updated_at;
-    }
-  }
-
-  if (maxUpdatedAt) {
-    await setSyncCursor(SyncCursorKeys.careLinks, maxUpdatedAt);
-  }
-
-  return applied;
-};
-
-export const pullThresholdRules = async (): Promise<number> => {
-  const lastPulledAt = await getSyncCursor(SyncCursorKeys.thresholdRules);
-  const remoteRows = await fetchRemoteThresholdRulesChangedSince(lastPulledAt);
-
-  let applied = 0;
-  let maxUpdatedAt = lastPulledAt;
-
-  for (const remoteRow of remoteRows) {
-    const localRow = await getThresholdRuleByIdSafe(remoteRow.id);
-
-    if (!localRow) {
-      await upsertThresholdRuleFromRemote(
-        mapRemoteThresholdRuleToLocal(remoteRow),
-      );
-      applied++;
-
-      if (!maxUpdatedAt || remoteRow.updated_at > maxUpdatedAt) {
-        maxUpdatedAt = remoteRow.updated_at;
-      }
-      continue;
-    }
-
-    if (localRow.syncStatus === "pending") {
-      continue;
-    }
-
-    const localUpdatedAt = localRow.updatedAt ?? "";
-    const remoteUpdatedAt = remoteRow.updated_at ?? "";
-
-    if (remoteUpdatedAt > localUpdatedAt) {
-      await upsertThresholdRuleFromRemote(
-        mapRemoteThresholdRuleToLocal(remoteRow),
-      );
-      applied++;
-    }
-
-    if (
-      !maxUpdatedAt ||
-      (remoteRow.updated_at && remoteRow.updated_at > maxUpdatedAt)
-    ) {
-      maxUpdatedAt = remoteRow.updated_at;
-    }
-  }
-
-  if (maxUpdatedAt) {
-    await setSyncCursor(SyncCursorKeys.thresholdRules, maxUpdatedAt);
-  }
-
-  return applied;
-};
-
-export const pullReadings = async (): Promise<number> => {
-  const lastPulledAt = await getSyncCursor(SyncCursorKeys.readings);
-  const remoteRows = await fetchRemoteReadingsChangedSince(lastPulledAt);
-
-  let applied = 0;
-  let maxUpdatedAt = lastPulledAt;
-
-  for (const remoteRow of remoteRows) {
-    const localRow = await getReadingByIdSafe(remoteRow.id);
-
-    if (!localRow) {
-      await upsertReadingFromRemote(mapRemoteReadingToLocal(remoteRow));
-      applied++;
-
-      if (!maxUpdatedAt || remoteRow.updated_at > maxUpdatedAt) {
-        maxUpdatedAt = remoteRow.updated_at;
-      }
-      continue;
-    }
-
-    if (localRow.syncStatus === "pending") {
-      continue;
-    }
-
-    const localUpdatedAt = localRow.updatedAt ?? "";
-    const remoteUpdatedAt = remoteRow.updated_at ?? "";
-
-    if (remoteUpdatedAt > localUpdatedAt) {
-      await upsertReadingFromRemote(mapRemoteReadingToLocal(remoteRow));
-      applied++;
-    }
-
-    if (
-      !maxUpdatedAt ||
-      (remoteRow.updated_at && remoteRow.updated_at > maxUpdatedAt)
-    ) {
-      maxUpdatedAt = remoteRow.updated_at;
-    }
-  }
-
-  if (maxUpdatedAt) {
-    await setSyncCursor(SyncCursorKeys.readings, maxUpdatedAt);
-  }
-
-  return applied;
-};
-
-export const pullFollowups = async (): Promise<number> => {
-  const lastPulledAt = await getSyncCursor(SyncCursorKeys.followups);
-  const remoteRows = await fetchRemoteFollowupsChangedSince(lastPulledAt);
-
-  let applied = 0;
-  let maxUpdatedAt = lastPulledAt;
-
-  for (const remoteRow of remoteRows) {
-    const localRow = await getFollowupByIdSafe(remoteRow.id);
-
-    if (!localRow) {
-      await upsertFollowupFromRemote(mapRemoteFollowupToLocal(remoteRow));
-      applied++;
-
-      if (!maxUpdatedAt || remoteRow.updated_at > maxUpdatedAt) {
-        maxUpdatedAt = remoteRow.updated_at;
-      }
-      continue;
-    }
-
-    if (localRow.syncStatus === "pending") {
-      continue;
-    }
-
-    const localUpdatedAt = localRow.updatedAt ?? "";
-    const remoteUpdatedAt = remoteRow.updated_at ?? "";
-
-    if (remoteUpdatedAt > localUpdatedAt) {
-      await upsertFollowupFromRemote(mapRemoteFollowupToLocal(remoteRow));
-      applied++;
-    }
-
-    if (
-      !maxUpdatedAt ||
-      (remoteRow.updated_at && remoteRow.updated_at > maxUpdatedAt)
-    ) {
-      maxUpdatedAt = remoteRow.updated_at;
-    }
-  }
-
-  if (maxUpdatedAt) {
-    await setSyncCursor(SyncCursorKeys.followups, maxUpdatedAt);
+    await setSyncCursor(syncCursorKey, maxUpdatedAt);
   }
 
   return applied;
 };
 
 export const pullChanges = async (): Promise<number> => {
-  const profilesApplied = await pullProfiles();
+  const profilesApplied = await pullRows<
+    ProfileRow,
+    ProfileInsert,
+    Database["public"]["Tables"]["profiles"]["Row"]
+  >({
+    syncCursorKey: SyncCursorKeys.profiles,
+    fetchRemoteRowsChangedSince: fetchRemoteProfilesChangedSince,
+    getRowByIdSafe: getProfileByIdSafe,
+    mapRemoteRowToLocal: mapRemoteProfileToLocal,
+    upsertRowFromRemote: upsertProfileFromRemote,
+  });
   console.log(`profiles applied: ${profilesApplied}`);
-  const careLinksApplied = await pullCareLinks();
+  const careLinksApplied = await pullRows<
+    CareLinkRow,
+    CareLinkInsert,
+    Database["public"]["Tables"]["care_links"]["Row"]
+  >({
+    syncCursorKey: SyncCursorKeys.careLinks,
+    fetchRemoteRowsChangedSince: fetchRemoteCareLinksChangedSince,
+    getRowByIdSafe: getCareLinkByIdSafe,
+    mapRemoteRowToLocal: mapRemoteCareLinkToLocal,
+    upsertRowFromRemote: upsertCareLinkFromRemote,
+  });
   console.log(`careLinks applied: ${careLinksApplied}`);
-  const thresholdRulesApplied = await pullThresholdRules();
+  const thresholdRulesApplied = await pullRows<
+    ThresholdRuleRow,
+    ThresholdRuleInsert,
+    Database["public"]["Tables"]["threshold_rules"]["Row"]
+  >({
+    syncCursorKey: SyncCursorKeys.thresholdRules,
+    fetchRemoteRowsChangedSince: fetchRemoteThresholdRulesChangedSince,
+    getRowByIdSafe: getThresholdRuleByIdSafe,
+    mapRemoteRowToLocal: mapRemoteThresholdRuleToLocal,
+    upsertRowFromRemote: upsertThresholdRuleFromRemote,
+  });
   console.log(`thresholdRules applied: ${thresholdRulesApplied}`);
-  const readingsApplied = await pullReadings();
+  const readingsApplied = await pullRows<
+    ReadingRow,
+    ReadingInsert,
+    Database["public"]["Tables"]["readings"]["Row"]
+  >({
+    syncCursorKey: SyncCursorKeys.readings,
+    fetchRemoteRowsChangedSince: fetchRemoteReadingsChangedSince,
+    getRowByIdSafe: getReadingByIdSafe,
+    mapRemoteRowToLocal: mapRemoteReadingToLocal,
+    upsertRowFromRemote: upsertReadingFromRemote,
+  });
   console.log(`readings applied: ${readingsApplied}`);
-  const followupsApplied = await pullFollowups();
+  const followupsApplied = await pullRows<
+    FollowupRow,
+    FollowupInsert,
+    Database["public"]["Tables"]["followups"]["Row"]
+  >({
+    syncCursorKey: SyncCursorKeys.followups,
+    fetchRemoteRowsChangedSince: fetchRemoteFollowupsChangedSince,
+    getRowByIdSafe: getFollowupByIdSafe,
+    mapRemoteRowToLocal: mapRemoteFollowupToLocal,
+    upsertRowFromRemote: upsertFollowupFromRemote,
+  });
   console.log(`followups applied: ${followupsApplied}`);
 
   return (

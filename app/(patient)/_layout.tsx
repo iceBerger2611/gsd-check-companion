@@ -1,10 +1,11 @@
+import CreateCodeModal from "@/components/CreateCodeModal";
 import supabase from "@/lib/supabase";
 import { appTheme } from "@/lib/theme";
 import { runSync } from "@/services/syncService";
 import { NativeStackHeaderProps } from "@react-navigation/native-stack";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
-import { Appbar, Menu } from "react-native-paper";
+import { Appbar, Menu, Modal, Portal } from "react-native-paper";
 
 const PatientHeader = ({
   navigation,
@@ -12,6 +13,8 @@ const PatientHeader = ({
   route,
 }: NativeStackHeaderProps) => {
   const [isMainMenuVisible, setIsMainMenuVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
   const router = useRouter();
 
   const onLogout = async () => {
@@ -25,6 +28,11 @@ const PatientHeader = ({
     router.push("/(patient)/settings");
   };
 
+  const onCode = () => {
+    setIsModalVisible(true);
+    setIsMainMenuVisible(false);
+  };
+
   const onSync = async () => {
     await runSync();
   };
@@ -35,6 +43,15 @@ const PatientHeader = ({
       elevated
       style={{ backgroundColor: appTheme.colors.surface }}
     >
+      <Portal>
+        <Modal
+          visible={isModalVisible}
+          onDismiss={() => setIsModalVisible(false)}
+          contentContainerStyle={{ backgroundColor: "white", padding: 20, height: '60%', marginHorizontal: 50 }}
+        >
+          <CreateCodeModal />
+        </Modal>
+      </Portal>
       {router.canDismiss() && !route.name.includes("index") && (
         <Appbar.BackAction onPress={() => router.dismiss()} />
       )}
@@ -52,6 +69,7 @@ const PatientHeader = ({
         <Menu.Item onPress={onLogout} title="Logout" />
         <Menu.Item onPress={onSettings} title="Settings" />
         <Menu.Item onPress={onSync} title="Sync" />
+        <Menu.Item onPress={onCode} title="Create Invite Code" />
       </Menu>
     </Appbar.Header>
   );

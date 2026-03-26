@@ -1,16 +1,15 @@
-import RecentHistory from "@/components/RecentHistory";
+import Home from "@/components/Home";
 import { FollowupType } from "@/db/schema";
 import { useGetProfile } from "@/hooks/profile";
 import { requestPermissionForNotifications } from "@/notifications/register";
 import { useRouter } from "expo-router/build/hooks";
-import {} from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { ActivityIndicator, Button, Menu, Text } from "react-native-paper";
 
 const PatientPage = () => {
   const router = useRouter();
-  const { isFetching, profile: patient } = useGetProfile();
+  const { profile: patient } = useGetProfile();
   const [isLogMenuVisible, setIsLogMenuVisible] = useState(false);
 
   useEffect(() => {
@@ -28,22 +27,14 @@ const PatientPage = () => {
     );
   };
 
-  return isFetching ? (
+  return (!patient) ? (
     <View>
       <Text>Loading Data...</Text>
       <ActivityIndicator animating />
     </View>
   ) : (
-    <View
-      style={{
-        paddingTop: 20,
-        paddingHorizontal: 24,
-        gap: 30,
-        justifyContent: "flex-start",
-      }}
-    >
-      {patient?.id && (
-        <Menu
+    <View>
+      <Menu
           visible={isLogMenuVisible}
           onDismiss={() => setIsLogMenuVisible(false)}
           anchor={
@@ -51,6 +42,7 @@ const PatientPage = () => {
               uppercase
               mode="contained"
               onPress={() => setIsLogMenuVisible((prev) => !prev)}
+              style={{ marginHorizontal: 24, marginTop: 10 }}
             >
               NEW LOG
             </Button>
@@ -65,15 +57,7 @@ const PatientPage = () => {
             title="Drink Cornstarch"
           />
         </Menu>
-      )}
-      <View style={{ gap: 10, justifyContent: "center" }}>
-        <View style={{ alignItems: "center" }}>
-          <Text variant="displaySmall">
-            Hello, {patient?.display_name || "there"}!
-          </Text>
-        </View>
-        {patient?.id && <RecentHistory patientId={patient.id} />}
-      </View>
+        <Home patient={patient} userName={patient.displayName || 'there'}/>
     </View>
   );
 };

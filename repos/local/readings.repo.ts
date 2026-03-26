@@ -41,13 +41,20 @@ export const getReadingByIdSafe = async (
 
 export const listReadingsByPatient = async (
   patientId: string,
+  limit?: number
 ): Promise<ReadingRow[]> => {
   try {
-    const results = await db
+    let query = db
       .select()
       .from(readings)
       .where(eq(readings.patientId, patientId))
-      .orderBy(desc(readings.recordedAt));
+      .orderBy(desc(readings.recordedAt))
+      .$dynamic()
+      
+      if (limit) {
+        query = query.limit(5)
+      }
+      const results = await query
     return results;
   } catch (error) {
     throw mapDbError(error, "failed to get readings");

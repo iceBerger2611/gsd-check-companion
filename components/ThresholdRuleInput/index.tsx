@@ -9,6 +9,7 @@ import Toast from "react-native-toast-message";
 import ThreshAction from "./ThreshAction";
 import ThreshLabel from "./ThreshLabel";
 import ThreshRange from "./ThreshRange";
+import { runSync } from "@/services/syncService";
 
 const ThresholdRuleInput = ({ threshold }: { threshold: ThresholdRuleRow }) => {
   const [currThresh, setCurrThresh] = useState(threshold);
@@ -19,6 +20,7 @@ const ThresholdRuleInput = ({ threshold }: { threshold: ThresholdRuleRow }) => {
       type: "success",
       text1: "threshold updated successfully",
     });
+    await runSync()
   };
 
   return (

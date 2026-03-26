@@ -1,12 +1,12 @@
-import { GetUserProfile } from "@/db/operations";
+import { dumpDbProfiles } from "@/db/utils";
 import supabase from "@/lib/supabase";
-import { Profile } from "@/types/tables.types";
+import { getProfileById, ProfileRow } from "@/repos/local/profiles.repo";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { SyncStateAtom } from "./sync";
 
 export const useGetProfile = () => {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const syncState = useAtomValue(SyncStateAtom);
 
@@ -19,7 +19,7 @@ export const useGetProfile = () => {
         setIsFetching(false);
         return;
       }
-      const res = await GetUserProfile(id);
+      const res = await getProfileById(id);
       if (!(res instanceof Error)) {
         setProfile(res);
       }

@@ -1,9 +1,11 @@
 import supabase from "@/lib/supabase";
+import { listSupervisorCareLinks } from "@/repos/local/careLinks.repo";
+import { getProfileByIdSafe, ProfileRow } from "@/repos/local/profiles.repo";
+import { upsertReading } from "@/repos/local/readings.repo";
+import { Database } from "@/types/database.types";
 import { Profile } from "@/types/tables.types";
 import { Session, User } from "@supabase/supabase-js";
 import { identifySupabaseError } from "./utils";
-import { Database } from "@/types/database.types";
-import { upsertReading } from "@/repos/local/readings.repo";
 
 interface AuthInRes {
   session: Session | null;
@@ -107,31 +109,43 @@ export const LinkSupervisorToPatient = async (
   }
 };
 
-export const GetPatientOfSupervisor = async (supervisorId: string) => {
+export const GetPatientsOfSupervisor = async (supervisorId: string) => {
   try {
-    const { data } = await supabase
-      .from("care_links")
-      .select("patient_id")
-      .eq("supervisor_id", supervisorId)
-      .single();
-
-    if (data?.patient_id) {
-      const res = await GetUserProfile(data.patient_id);
-      return res;
-    }
-    return null;
+    const careLinks = await listSupervisorCareLinks(supervisorId);
+    const results = await Promise.allSettled(
+      Array.from(
+        { length: careLinks.length },
+        (_, index) =>
+          careLinks[index].patientId &&
+          getProfileByIdSafe(careLinks[index].patientId),
+      ),
+    );
+    const patients: ProfileRow[] = [];
+    results.forEach((promise) => {
+      if (promise.status === "fulfilled" && promise.value) {
+        patients.push(promise.value);
+      }
+    });
+    return patients;
   } catch (error) {
     return handleCatch(error);
   }
 };
 
 export const InsertNewReading = async (
-  reading: Database['public']['Tables']['readings']['Insert']
+  reading: Database["public"]["Tables"]["readings"]["Insert"],
 ) => {
   try {
-    const { status, data } = await supabase.from("readings").insert(reading).single()
-    const res = await supabase.from('readings').select('*').eq("id", data?.['id'] as unknown as string).single()
-    await upsertReading({...reading, id: res.data?.id || 'new'})
+    const { status, data } = await supabase
+      .from("readings")
+      .insert(reading)
+      .single();
+    const res = await supabase
+      .from("readings")
+      .select("*")
+      .eq("id", data?.["id"] as unknown as string)
+      .single();
+    await upsertReading({ ...reading, id: res.data?.id || "new" });
     return status;
   } catch (error) {
     return handleCatch(error);
