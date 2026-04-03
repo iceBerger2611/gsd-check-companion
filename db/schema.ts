@@ -14,6 +14,7 @@ export const SyncCursorKeys = {
   thresholdRules: "threshold_rules_last_pull",
   readings: "readings_last_pull",
   followups: "followups_last_pull",
+  patientSettings: "patient_settings_last_pull"
 } as const;
 
 export const SYNC_STATUS = {
@@ -50,6 +51,26 @@ export type ThresholdRuleClassification =
   | "normal"
   | "low"
   | "critical";
+
+// export type PatientSettings = {
+//   id: string;
+//   patientId: string;
+//   followupSpacingMinutes: number; // basically the time between cornstarch followups
+//   notificationSpacingMinutes: number;
+//   notificationCount: number;
+//   notificationWindowOverride: {
+//     windowStartMinuteOfDay: number;
+//     windowEndMinuteofDay: number;
+//     windowNotificationSpacingMinutes: number;
+//     windowNotificationCount: number;
+//   } | null;
+//   createdAt: string | null;
+//   updatedAt: string | null;
+//   deletedAt: string | null;
+//   syncStatus: string;
+//   lastSyncedAt: string | null;
+//   syncError: string | null;
+// };
 
 export const profiles = sqliteTable("profiles", {
   id: text("id").primaryKey(),
@@ -237,4 +258,26 @@ export const syncState = sqliteTable("sync_state", {
   key: text("key").primaryKey(),
   value: text("value"),
   updatedAt: text("updated_at").notNull(),
+});
+
+export const patientSettings = sqliteTable("patient_settings", {
+  id: text("id").primaryKey(),
+  patientId: text("patient_id").notNull().unique(),
+
+  followupSpacingMinutes: integer("followup_spacing_minutes").notNull(),
+  notificationSpacingMinutes: integer("notification_spacing_minutes").notNull(),
+  notificationCount: integer("notification_count").notNull(),
+
+  windowStartMinuteOfDay: integer("window_start_minute_of_day"),
+  windowEndMinuteOfDay: integer("window_end_minute_of_day"),
+  windowNotificationSpacingMinutes: integer("window_notification_spacing_minutes"),
+  windowNotificationCount: integer("window_notification_count"),
+
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+  deletedAt: text("deleted_at"),
+
+  syncStatus: text("sync_status").notNull().default("synced"),
+  lastSyncedAt: text("last_synced_at"),
+  syncError: text("sync_error"),
 });

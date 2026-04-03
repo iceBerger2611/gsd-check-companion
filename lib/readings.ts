@@ -1,13 +1,17 @@
 import { AppError } from "@/db/errors";
 import { Action, DecisionType, FollowupType, Intervention } from "@/db/schema";
 import { dumpDbState } from "@/db/utils";
-import { scheduleNextNotifications } from "@/notifications/scheduler";
+import {
+  cancelNotificationsOnFollowup,
+  scheduleNextNotifications,
+} from "@/notifications/scheduler";
 import {
   completeFollowup,
   FollowupInsert,
   getFollowupById,
   upsertFollowup,
 } from "@/repos/local/followups.repo";
+import { PatientSettingsRow } from "@/repos/local/patientSettings.repo";
 import {
   getReadingById,
   ReadingInsert,
@@ -62,15 +66,25 @@ const findThresholdOfReading = (
 export const evaluateReading = (
   reading: ReadingInsert,
   thresholdRules: ThresholdRuleRow[],
+  personalSettings: PatientSettingsRow,
 ): ReadingPlan => {
   const relevantThreshold = findThresholdOfReading(reading, thresholdRules);
+
+  // const followupMinutes =
+  //   (personalSettings.windowStartMinuteOfDay &&
+  //   personalSettings.windowEndMinuteOfDay &&
+  //   isNowInWindow(
+  //     toMinutes(new Date()),
+  //     personalSettings.windowStartMinuteOfDay,
+  //     personalSettings.windowEndMinuteOfDay,
+  //   )) ? personalSettings.wind
 
   if (!relevantThreshold || !relevantThreshold.actions?.length)
     return {
       immediateIntervention: null,
       matchedRuleId: "none",
       nexFollowup: {
-        delayMinutes: 180,
+        delayMinutes: personalSettings.followupSpacingMinutes,
         type: "drink_cornstarch",
       },
     };
@@ -118,6 +132,7 @@ export const convertReadingPlanToReadingAction = (
 
 export const processReading = async (
   reading: ReadingInsert,
+  personalSettings: PatientSettingsRow,
   earlyDecision?: DecisionType,
   sourceFollowUpId?: string,
 ) => {
@@ -132,7 +147,11 @@ export const processReading = async (
     recordedAt: new Date().toISOString(),
   };
 
-  const readingPlan = evaluateReading(newReading, relatedThresholds);
+  const readingPlan = evaluateReading(
+    newReading,
+    relatedThresholds,
+    personalSettings,
+  );
 
   const convertedReadingAction = convertReadingPlanToReadingAction(readingPlan);
 
@@ -173,11 +192,13 @@ export const processReading = async (
           addedReadingRow.meterPhotoUrl ||
           undefined,
       );
+      await cancelNotificationsOnFollowup(sourceFollowUpId);
     }
     const res = await scheduleNextNotifications(
       addedReadingRow,
       addedFollowupRow,
       followupDate,
+      personalSettings,
     );
     const notificationIds: string[] = [];
     res.forEach((settledResult) => {
@@ -192,7 +213,6 @@ export const processReading = async (
     await runSync();
     await dumpDbState();
     return { addedReadingRow, addedFollowupRow };
-    // create notifications and followups
   } catch (error) {
     return error as AppError;
   }

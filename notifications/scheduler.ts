@@ -1,11 +1,19 @@
+import { toMinutes } from "@/components/OverrideWindowSettings";
 import { FollowupType } from "@/db/schema";
-import { FollowupRow } from "@/repos/local/followups.repo";
+import { isNowInWindow } from "@/lib/utils";
+import {
+  FollowupRow,
+  getFollowupByIdSafe,
+  upsertFollowup,
+} from "@/repos/local/followups.repo";
+import { PatientSettingsRow } from "@/repos/local/patientSettings.repo";
 import { ReadingRow } from "@/repos/local/readings.repo";
 import { addMinutes } from "date-fns";
 import {
+  cancelScheduledNotificationAsync,
+  getAllScheduledNotificationsAsync,
   SchedulableTriggerInputTypes,
   scheduleNotificationAsync,
-  cancelScheduledNotificationAsync
 } from "expo-notifications";
 
 export type NotificationData = {
@@ -14,11 +22,67 @@ export type NotificationData = {
   readingId: string;
 };
 
+export const cancelNotificationsOnFollowup = async (followupId: string) => {
+  const followup = await getFollowupByIdSafe(followupId);
+  if (!followup) return;
+  if (!followup?.scheduledNotificationIds?.length) return;
+  const followupNotificationIds = followup.scheduledNotificationIds;
+  const activeNotifications = await getAllScheduledNotificationsAsync();
+  if (!activeNotifications.length) {
+    await upsertFollowup({
+      ...followup,
+      scheduledNotificationIds: [],
+    });
+    return;
+  }
+  const activeIds = new Set(
+    activeNotifications.map((notification) => notification.identifier),
+  );
+
+  const notificationIdsToCancel = followupNotificationIds.filter((id) =>
+    activeIds.has(id),
+  );
+
+  if (!notificationIdsToCancel.length) {
+    await upsertFollowup({
+      ...followup,
+      scheduledNotificationIds: [],
+    });
+    return;
+  }
+
+  const results = await Promise.allSettled(
+    notificationIdsToCancel.map((notificationId) =>
+      cancelScheduledNotificationAsync(notificationId),
+    ),
+  );
+  const remainingNotificationIds = notificationIdsToCancel.filter(
+    (_, index) => {
+      return results[index]?.status !== "fulfilled";
+    },
+  );
+
+  await upsertFollowup({
+    ...followup,
+    scheduledNotificationIds: remainingNotificationIds,
+  });
+};
+
 export const scheduleNextNotifications = async (
   reading: ReadingRow,
   followup: FollowupRow,
   notificationDate: Date,
+  personalSettings: PatientSettingsRow,
 ) => {
+  const isInWindow =
+    personalSettings.windowStartMinuteOfDay &&
+    personalSettings.windowEndMinuteOfDay &&
+    isNowInWindow(
+      toMinutes(new Date()),
+      personalSettings.windowStartMinuteOfDay,
+      personalSettings.windowEndMinuteOfDay,
+    );
+
   const finalDecision = reading.finalDecision;
 
   const titleMessage =
@@ -38,23 +102,37 @@ export const scheduleNextNotifications = async (
         : "drink_cornstarch";
 
   const scheduledResults = await Promise.allSettled(
-    Array.from({ length: 1 }, (_, index) =>
-      scheduleNotificationAsync({
-        content: {
-          title: `Time to ${titleMessage}!`,
-          body: "Tap here to complete the action",
-          interruptionLevel: "timeSensitive",
-          data: {
-            followup: chosenFollowup,
-            readingId: reading.id,
-            followupId: followup.id,
+    Array.from(
+      {
+        length: isInWindow
+          ? personalSettings.windowNotificationCount ||
+            personalSettings.notificationCount
+          : personalSettings.notificationCount,
+      },
+      (_, index) =>
+        scheduleNotificationAsync({
+          content: {
+            title: `Time to ${titleMessage}!`,
+            body: "Tap here to complete the action",
+            interruptionLevel: "timeSensitive",
+            data: {
+              followup: chosenFollowup,
+              readingId: reading.id,
+              followupId: followup.id,
+            },
           },
-        },
-        trigger: {
-          type: SchedulableTriggerInputTypes.DATE,
-          date: addMinutes(notificationDate, index * 2),
-        },
-      }),
+          trigger: {
+            type: SchedulableTriggerInputTypes.DATE,
+            date: addMinutes(
+              notificationDate,
+              index *
+                (isInWindow
+                  ? personalSettings.windowNotificationSpacingMinutes ||
+                    personalSettings.followupSpacingMinutes
+                  : personalSettings.followupSpacingMinutes),
+            ),
+          },
+        }),
     ),
   );
 

@@ -154,6 +154,32 @@ export async function initLocalDB() {
   `);
 
   await db.run(`
+  CREATE TABLE IF NOT EXISTS patient_settings (
+    id TEXT PRIMARY KEY NOT NULL,
+    patient_id TEXT NOT NULL UNIQUE,
+    followup_spacing_minutes INTEGER NOT NULL,
+    notification_spacing_minutes INTEGER NOT NULL,
+    notification_count INTEGER NOT NULL,
+    window_start_minute_of_day INTEGER,
+    window_end_minute_of_day INTEGER,
+    window_notification_spacing_minutes INTEGER,
+    window_notification_count INTEGER,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    sync_status TEXT NOT NULL DEFAULT 'synced',
+    last_synced_at TEXT,
+    sync_error TEXT,
+    FOREIGN KEY (patient_id) REFERENCES profiles(id) ON DELETE CASCADE
+  );
+`);
+
+  await db.run(`
+  CREATE UNIQUE INDEX IF NOT EXISTS patient_settings_patient_id_idx
+  ON patient_settings(patient_id);
+`);
+
+  await db.run(`
     CREATE INDEX IF NOT EXISTS idx_sync_state_updated_at
     ON sync_state(updated_at);
   `);

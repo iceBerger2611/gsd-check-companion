@@ -1,4 +1,3 @@
-import { dumpDbProfiles } from "@/db/utils";
 import supabase from "@/lib/supabase";
 import { getProfileById, ProfileRow } from "@/repos/local/profiles.repo";
 import { useAtomValue } from "jotai";

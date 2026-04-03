@@ -210,6 +210,59 @@ export type Database = {
           },
         ]
       }
+      patient_settings: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          followup_spacing_minutes: number
+          id: string
+          notification_count: number
+          notification_spacing_minutes: number
+          patient_id: string
+          updated_at: string
+          window_end_minute_of_day: number | null
+          window_notification_count: number | null
+          window_notification_spacing_minutes: number | null
+          window_start_minute_of_day: number | null
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          followup_spacing_minutes?: number
+          id?: string
+          notification_count?: number
+          notification_spacing_minutes?: number
+          patient_id: string
+          updated_at?: string
+          window_end_minute_of_day?: number | null
+          window_notification_count?: number | null
+          window_notification_spacing_minutes?: number | null
+          window_start_minute_of_day?: number | null
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          followup_spacing_minutes?: number
+          id?: string
+          notification_count?: number
+          notification_spacing_minutes?: number
+          patient_id?: string
+          updated_at?: string
+          window_end_minute_of_day?: number | null
+          window_notification_count?: number | null
+          window_notification_spacing_minutes?: number | null
+          window_start_minute_of_day?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_settings_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

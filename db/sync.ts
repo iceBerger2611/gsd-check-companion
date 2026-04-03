@@ -17,6 +17,15 @@ import {
   upsertFollowupFromRemote,
 } from "@/repos/local/followups.repo";
 import {
+  getPatientSettingsByIdSafe,
+  listPendingPatientSettingss,
+  markPatientSettingsFailed,
+  markPatientSettingsSynced,
+  PatientSettingsInsert,
+  PatientSettingsRow,
+  upsertPatientSettingsFromRemote,
+} from "@/repos/local/patientSettings.repo";
+import {
   getProfileByIdSafe,
   listPendingProfiles,
   markProfileFailed,
@@ -53,6 +62,10 @@ import {
   upsertRemoteFollowup,
 } from "@/repos/remote/followups.remote";
 import {
+  fetchRemotePatientSettingsChangedSince,
+  upsertRemotePatientSettings,
+} from "@/repos/remote/patientSettings.remote";
+import {
   fetchRemoteProfilesChangedSince,
   upsertRemoteProfile,
 } from "@/repos/remote/profiles.remote";
@@ -68,16 +81,19 @@ import {
   getErrorMessage,
   mapLocalCareLinkToRemote,
   mapLocalFollowupToRemote,
+  mapLocalPatientSettingsToRemote,
   mapLocalProfileToRemote,
   mapLocalReadingToRemote,
   mapLocalThresholdRuleToRemote,
   mapRemoteCareLinkToLocal,
   mapRemoteFollowupToLocal,
+  mapRemotePatientSettingsToLocal,
   mapRemoteProfileToLocal,
   mapRemoteReadingToLocal,
   mapRemoteThresholdRuleToLocal,
   RemoteCareLinkUpsertPayload,
   RemoteFollowupUpsertPayload,
+  RemotePatientSettingsUpsertPayload,
   RemoteProfileUpsertPayload,
   RemoteReadingUpsertPayload,
   RemoteThresholdRuleUpsertPayload,
@@ -177,6 +193,16 @@ export const pushPendingChanges = async (): Promise<PushPendingResult> => {
     markRowSynced: markCareLinkSynced,
     upsertRemoteRow: upsertRemoteCareLink,
   });
+  const patientSettingsResults = await pushPendingRows<
+    PatientSettingsRow,
+    RemotePatientSettingsUpsertPayload
+  >({
+    listPendingRows: listPendingPatientSettingss,
+    mapLocalRowToRemote: mapLocalPatientSettingsToRemote,
+    markRowFailed: markPatientSettingsFailed,
+    markRowSynced: markPatientSettingsSynced,
+    upsertRemoteRow: upsertRemotePatientSettings,
+  });
   const thresholdRuleResults = await pushPendingRows<
     ThresholdRuleRow,
     RemoteThresholdRuleUpsertPayload
@@ -211,6 +237,7 @@ export const pushPendingChanges = async (): Promise<PushPendingResult> => {
   const results = [
     profileResults,
     careLinkResults,
+    patientSettingsResults,
     thresholdRuleResults,
     readingResults,
     followupResults,
@@ -311,6 +338,18 @@ export const pullChanges = async (): Promise<number> => {
     upsertRowFromRemote: upsertCareLinkFromRemote,
   });
   console.log(`careLinks applied: ${careLinksApplied}`);
+  const patientSettingsApplied = await pullRows<
+    PatientSettingsRow,
+    PatientSettingsInsert,
+    Database["public"]["Tables"]["patient_settings"]["Row"]
+  >({
+    syncCursorKey: SyncCursorKeys.patientSettings,
+    fetchRemoteRowsChangedSince: fetchRemotePatientSettingsChangedSince,
+    getRowByIdSafe: getPatientSettingsByIdSafe,
+    mapRemoteRowToLocal: mapRemotePatientSettingsToLocal,
+    upsertRowFromRemote: upsertPatientSettingsFromRemote,
+  });
+  console.log(`patientSettings applied: ${patientSettingsApplied}`);
   const thresholdRulesApplied = await pullRows<
     ThresholdRuleRow,
     ThresholdRuleInsert,
@@ -351,6 +390,7 @@ export const pullChanges = async (): Promise<number> => {
   return (
     profilesApplied +
     careLinksApplied +
+    patientSettingsApplied +
     thresholdRulesApplied +
     readingsApplied +
     followupsApplied

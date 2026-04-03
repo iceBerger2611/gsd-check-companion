@@ -1,4 +1,5 @@
 import { DecisionType, FollowupType } from "@/db/schema";
+import { usePatientSettings } from "@/hooks/settings";
 import { processReading } from "@/lib/readings";
 import { ReadingInsert } from "@/repos/local/readings.repo";
 import * as Crypto from "expo-crypto";
@@ -38,6 +39,8 @@ const ReadingForm = ({
 
   const router = useRouter();
 
+  const { settings } = usePatientSettings();
+
   useEffect(() => {
     photoUriRef.current = photoUri;
   }, [photoUri]);
@@ -60,8 +63,11 @@ const ReadingForm = ({
         return;
       }
 
+      if (!settings) return;
+
       const res = await processReading(
         reading,
+        settings,
         latestEarlyDecision,
         sourceFollowupId,
       );
@@ -91,7 +97,7 @@ const ReadingForm = ({
 
       router.navigate("/(patient)");
     },
-    [followup, router, sourceFollowupId],
+    [followup, router, sourceFollowupId, settings],
   );
 
   const steps = useMemo(

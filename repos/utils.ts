@@ -1,7 +1,12 @@
+import * as Crypto from "expo-crypto";
 import { Action, followupTypes, interventions } from "@/db/schema";
 import { Database } from "@/types/database.types";
 import { CareLinkInsert, CareLinkRow } from "./local/careLinks.repo";
 import { FollowupInsert, FollowupRow } from "./local/followups.repo";
+import {
+  PatientSettingsInsert,
+  PatientSettingsRow,
+} from "./local/patientSettings.repo";
 import { ProfileInsert, ProfileRow } from "./local/profiles.repo";
 import { ReadingInsert, ReadingRow } from "./local/readings.repo";
 import {
@@ -100,6 +105,28 @@ export type RemoteProfileUpsertPayload = Omit<
   Database["public"]["Tables"]["profiles"]["Insert"],
   "sync_status" | "last_synced_at" | "sync_error"
 >;
+
+export type RemotePatientSettingsUpsertPayload =
+  Database["public"]["Tables"]["patient_settings"]["Insert"];
+
+export const createBasicPatientSettings = (
+  patientId: string,
+): PatientSettingsInsert => ({
+  id: Crypto.randomUUID(),
+  patientId,
+  followupSpacingMinutes: 180,
+  notificationCount: 4,
+  notificationSpacingMinutes: 4,
+  windowEndMinuteOfDay: null,
+  windowNotificationCount: null,
+  windowNotificationSpacingMinutes: null,
+  windowStartMinuteOfDay: null,
+  createdAt: nowIso(),
+  updatedAt: nowIso(),
+  lastSyncedAt: nowIso(),
+  syncError: null,
+  syncStatus: 'synced' as const
+});
 
 export const mapLocalReadingToRemote = (
   row: ReadingRow,
@@ -274,7 +301,9 @@ export function mapRemoteReadingToLocal(
     patientId: row.patient_id,
     cornstarchPhotoUrl: row.cornstarch_photo_url,
     meterPhotoUrl: row.meter_photo_url,
-    evaluatedDecision: isAction(row.evaluated_decision) ? row.evaluated_decision : null,
+    evaluatedDecision: isAction(row.evaluated_decision)
+      ? row.evaluated_decision
+      : null,
     finalDecision: isAction(row.final_decision) ? row.final_decision : null,
     glucoseValue: row.glucose_value,
     note: row.note,
@@ -313,3 +342,40 @@ export function mapRemoteFollowupToLocal(
     syncError: null,
   };
 }
+
+export const mapRemotePatientSettingsToLocal = (
+  row: Database["public"]["Tables"]["patient_settings"]["Row"],
+): PatientSettingsInsert => ({
+  id: row.id,
+  patientId: row.patient_id,
+  followupSpacingMinutes: row.followup_spacing_minutes,
+  notificationSpacingMinutes: row.notification_spacing_minutes,
+  notificationCount: row.notification_count,
+  windowStartMinuteOfDay: row.window_start_minute_of_day,
+  windowEndMinuteOfDay: row.window_end_minute_of_day,
+  windowNotificationSpacingMinutes: row.window_notification_spacing_minutes,
+  windowNotificationCount: row.window_notification_count,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  deletedAt: row.deleted_at,
+  syncStatus: "synced",
+  lastSyncedAt: new Date().toISOString(),
+  syncError: null,
+});
+
+export const mapLocalPatientSettingsToRemote = (
+  row: PatientSettingsRow,
+): Database["public"]["Tables"]["patient_settings"]["Insert"] => ({
+  id: row.id,
+  patient_id: row.patientId,
+  followup_spacing_minutes: row.followupSpacingMinutes,
+  notification_spacing_minutes: row.notificationSpacingMinutes,
+  notification_count: row.notificationCount,
+  window_start_minute_of_day: row.windowStartMinuteOfDay,
+  window_end_minute_of_day: row.windowEndMinuteOfDay,
+  window_notification_spacing_minutes: row.windowNotificationSpacingMinutes,
+  window_notification_count: row.windowNotificationCount,
+  created_at: row.createdAt,
+  updated_at: row.updatedAt,
+  deleted_at: row.deletedAt,
+});

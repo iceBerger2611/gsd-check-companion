@@ -25,3 +25,17 @@ export const resolveNextFollowupPlan = (
     minutes: plan.nexFollowup.delayMinutes,
   };
 };
+
+export const isNowInWindow = (
+  nowMinutes: number,
+  startMinutes: number,
+  endMinutes: number
+) => {
+  if (startMinutes <= endMinutes) {
+    // normal case
+    return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+  } else {
+    // crosses midnight
+    return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+  }
+};

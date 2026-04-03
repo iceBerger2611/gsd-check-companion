@@ -1,3 +1,4 @@
+import PatientSettingsFields from "@/components/PatientSettingsFields";
 import ThresholdRuleInput from "@/components/ThresholdRuleInput";
 import { useGetProfile } from "@/hooks/profile";
 import { upsertProfile } from "@/repos/local/profiles.repo";
@@ -27,7 +28,8 @@ const PatientSettings = () => {
   const { isFetching, profile: patient } = useGetProfile();
   const [displayName, setDispalyName] = useState(patient?.displayName);
   const [thresholdRules, setThresholdRules] = useState<ThresholdRuleRow[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [ThreshExpanded, setThreshExpanded] = useState(false);
+  const [patientExpanded, setPatientExpanded] = useState(false);
 
   const onDisplaySave = async () => {
     if (!patient || !displayName) return;
@@ -90,8 +92,8 @@ const PatientSettings = () => {
             <List.Section>
               <List.Accordion
                 title="Thresholds"
-                expanded={expanded}
-                onPress={() => setExpanded((prev) => !prev)}
+                expanded={ThreshExpanded}
+                onPress={() => setThreshExpanded((prev) => !prev)}
               >
                 <View style={{ gap: 10, paddingTop: 20 }}>
                   {thresholdRules.map((thresholdRule) => (
@@ -104,6 +106,15 @@ const PatientSettings = () => {
                     </View>
                   ))}
                 </View>
+              </List.Accordion>
+            </List.Section>
+            <List.Section>
+              <List.Accordion
+                title="Patient Settings"
+                expanded={patientExpanded}
+                onPress={() => setPatientExpanded((prev) => !prev)}
+              >
+                {patient && <PatientSettingsFields patient={patient} />}
               </List.Accordion>
             </List.Section>
           </ScrollView>
