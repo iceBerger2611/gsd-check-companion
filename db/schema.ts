@@ -14,7 +14,7 @@ export const SyncCursorKeys = {
   thresholdRules: "threshold_rules_last_pull",
   readings: "readings_last_pull",
   followups: "followups_last_pull",
-  patientSettings: "patient_settings_last_pull"
+  patientSettings: "patient_settings_last_pull",
 } as const;
 
 export const SYNC_STATUS = {
@@ -24,6 +24,26 @@ export const SYNC_STATUS = {
 } as const;
 
 export type SyncStatus = (typeof SYNC_STATUS)[keyof typeof SYNC_STATUS];
+
+export const FOLLOWUP_STATUS = {
+  PENDING: "pending",
+  COMPLETED: "completed",
+  dismissed: "dismissed",
+} as const;
+
+export type FollowupStatus =
+  (typeof FOLLOWUP_STATUS)[keyof typeof FOLLOWUP_STATUS];
+
+export const TERMINAL_FOLLOWUP_STATUSES = new Set<FollowupStatus>([
+  "completed",
+  "dismissed",
+]);
+
+export const followupStateRank: Record<FollowupStatus, number> = {
+  pending: 1,
+  dismissed: 2,
+  completed: 3,
+};
 
 export const interventions = ["eat_immediately", "consume_glucose"] as const;
 
@@ -270,7 +290,9 @@ export const patientSettings = sqliteTable("patient_settings", {
 
   windowStartMinuteOfDay: integer("window_start_minute_of_day"),
   windowEndMinuteOfDay: integer("window_end_minute_of_day"),
-  windowNotificationSpacingMinutes: integer("window_notification_spacing_minutes"),
+  windowNotificationSpacingMinutes: integer(
+    "window_notification_spacing_minutes",
+  ),
   windowNotificationCount: integer("window_notification_count"),
 
   createdAt: text("created_at").notNull(),

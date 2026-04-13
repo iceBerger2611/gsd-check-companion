@@ -1,7 +1,26 @@
-import supabase from "@/lib/supabase";
-import { RemoteFollowupUpsertPayload } from "../utils";
-import { Database } from "@/types/database.types";
 import { mapDbError } from "@/db/errors";
+import supabase from "@/lib/supabase";
+import { Database } from "@/types/database.types";
+import { RemoteFollowupUpsertPayload } from "../utils";
+
+export type RemoteFollowup = Database["public"]["Tables"]["followups"]["Row"];
+
+export const getRemoteFollowupByIdSafe = async (
+  id: string,
+): Promise<RemoteFollowup | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("followups")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.log(mapDbError(error, "falied to get followup"));
+    return null;
+  }
+};
 
 export const upsertRemoteFollowup = async (
   payload: RemoteFollowupUpsertPayload,
@@ -18,7 +37,7 @@ export const upsertRemoteFollowup = async (
 
 export const fetchRemoteFollowupsChangedSince = async (
   lastPulledAt: string | null,
-): Promise<Database["public"]["Tables"]["followups"]["Row"][]> => {
+): Promise<RemoteFollowup[]> => {
   try {
     let query = supabase
       .from("followups")

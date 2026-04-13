@@ -1,7 +1,27 @@
-import supabase from "@/lib/supabase";
-import { RemoteThresholdRuleUpsertPayload } from "../utils";
-import { Database } from "@/types/database.types";
 import { mapDbError } from "@/db/errors";
+import supabase from "@/lib/supabase";
+import { Database } from "@/types/database.types";
+import { RemoteThresholdRuleUpsertPayload } from "../utils";
+
+export type RemoteThresholdRule =
+  Database["public"]["Tables"]["threshold_rules"]["Row"];
+
+export const getRemoteThresholdRuleByIdSafe = async (
+  id: string,
+): Promise<RemoteThresholdRule | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("threshold_rules")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.log(mapDbError(error, "falied to get threshold rule"));
+    return null;
+  }
+};
 
 export const upsertRemoteThresholdRule = async (
   payload: RemoteThresholdRuleUpsertPayload,
@@ -18,7 +38,7 @@ export const upsertRemoteThresholdRule = async (
 
 export const fetchRemoteThresholdRulesChangedSince = async (
   lastPulledAt: string | null,
-): Promise<Database["public"]["Tables"]["threshold_rules"]["Row"][]> => {
+): Promise<RemoteThresholdRule[]> => {
   try {
     let query = supabase
       .from("threshold_rules")

@@ -1,7 +1,26 @@
-import supabase from "@/lib/supabase";
-import { RemoteCareLinkUpsertPayload } from "../utils";
-import { Database } from "@/types/database.types";
 import { mapDbError } from "@/db/errors";
+import supabase from "@/lib/supabase";
+import { Database } from "@/types/database.types";
+import { RemoteCareLinkUpsertPayload } from "../utils";
+
+export type RemoteCareLink = Database["public"]["Tables"]["care_links"]["Row"];
+
+export const getRemoteCareLinkByIdSafe = async (
+  id: string,
+): Promise<RemoteCareLink | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("care_links")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.log(mapDbError(error, "falied to get care link"));
+    return null;
+  }
+};
 
 export const upsertRemoteCareLink = async (
   payload: RemoteCareLinkUpsertPayload,
@@ -18,7 +37,7 @@ export const upsertRemoteCareLink = async (
 
 export const fetchRemoteCareLinksChangedSince = async (
   lastPulledAt: string | null,
-): Promise<Database["public"]["Tables"]["care_links"]["Row"][]> => {
+): Promise<RemoteCareLink[]> => {
   try {
     let query = supabase
       .from("care_links")

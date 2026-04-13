@@ -1,7 +1,26 @@
-import supabase from "@/lib/supabase";
-import { RemoteProfileUpsertPayload } from "../utils";
-import { Database } from "@/types/database.types";
 import { mapDbError } from "@/db/errors";
+import supabase from "@/lib/supabase";
+import { Database } from "@/types/database.types";
+import { RemoteProfileUpsertPayload } from "../utils";
+
+export type RemoteProfile = Database["public"]["Tables"]["profiles"]["Row"];
+
+export const getRemoteProfileByIdSafe = async (
+  id: string,
+): Promise<RemoteProfile | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.log(mapDbError(error, "falied to get profile"));
+    return null;
+  }
+};
 
 export const upsertRemoteProfile = async (
   payload: RemoteProfileUpsertPayload,
@@ -18,7 +37,7 @@ export const upsertRemoteProfile = async (
 
 export const fetchRemoteProfilesChangedSince = async (
   lastPulledAt: string | null,
-): Promise<Database["public"]["Tables"]["profiles"]["Row"][]> => {
+): Promise<RemoteProfile[]> => {
   try {
     let query = supabase
       .from("profiles")

@@ -1,7 +1,8 @@
-import { pullChanges, pushPendingChanges } from "@/db/sync";
 import { RunSyncResult, SyncStateAtom } from "@/hooks/sync";
 import { getErrorMessage, nowIso } from "@/repos/utils";
 import { store } from "@/store";
+import { pullChanges } from "@/syncEngine/pull";
+import { pushPendingChanges } from "@/syncEngine/push";
 
 const syncWork = async (): Promise<RunSyncResult> => {
   const pushed = await pushPendingChanges();

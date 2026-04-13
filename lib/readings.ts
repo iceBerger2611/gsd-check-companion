@@ -70,15 +70,6 @@ export const evaluateReading = (
 ): ReadingPlan => {
   const relevantThreshold = findThresholdOfReading(reading, thresholdRules);
 
-  // const followupMinutes =
-  //   (personalSettings.windowStartMinuteOfDay &&
-  //   personalSettings.windowEndMinuteOfDay &&
-  //   isNowInWindow(
-  //     toMinutes(new Date()),
-  //     personalSettings.windowStartMinuteOfDay,
-  //     personalSettings.windowEndMinuteOfDay,
-  //   )) ? personalSettings.wind
-
   if (!relevantThreshold || !relevantThreshold.actions?.length)
     return {
       immediateIntervention: null,

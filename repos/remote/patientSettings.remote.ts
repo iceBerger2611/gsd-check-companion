@@ -3,6 +3,26 @@ import supabase from "@/lib/supabase";
 import { Database } from "@/types/database.types";
 import { RemotePatientSettingsUpsertPayload } from "../utils";
 
+export type RemotePatientSettings =
+  Database["public"]["Tables"]["patient_settings"]["Row"];
+
+export const getRemotePatientSettingsByIdSafe = async (
+  id: string,
+): Promise<RemotePatientSettings | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("patient_settings")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.log(mapDbError(error, "falied to get patient settings"));
+    return null;
+  }
+};
+
 export const upsertRemotePatientSettings = async (
   payload: RemotePatientSettingsUpsertPayload,
 ): Promise<void> => {
@@ -18,7 +38,7 @@ export const upsertRemotePatientSettings = async (
 
 export const fetchRemotePatientSettingsChangedSince = async (
   lastPulledAt: string | null,
-): Promise<Database["public"]["Tables"]["patient_settings"]["Row"][]> => {
+): Promise<RemotePatientSettings[]> => {
   try {
     let query = supabase
       .from("patient_settings")
