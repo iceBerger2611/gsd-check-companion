@@ -1,5 +1,5 @@
-import { AppError, mapDbError } from "@/db/errors";
-import supabase from "@/lib/supabase";
+import { AppError, mapDbError } from "@/src/db/errors";
+import supabase from "@/src/db/supabase";
 
 export type CreateCareLinkInviteResponse = {
   inviteId: string;

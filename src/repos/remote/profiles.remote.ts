@@ -1,7 +1,7 @@
-import { mapDbError } from "@/db/errors";
-import supabase from "@/lib/supabase";
-import { Database } from "@/types/database.types";
+import { Database } from "@/src/types/database.types";
 import { RemoteProfileUpsertPayload } from "../utils";
+import supabase from "@/src/db/supabase";
+import { mapDbError } from "@/src/db/errors";
 
 export type RemoteProfile = Database["public"]["Tables"]["profiles"]["Row"];
 

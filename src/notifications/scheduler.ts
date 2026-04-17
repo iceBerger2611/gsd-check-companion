@@ -1,13 +1,3 @@
-import { toMinutes } from "@/components/OverrideWindowSettings";
-import { FollowupType } from "@/db/schema";
-import { isNowInWindow } from "@/lib/utils";
-import {
-  FollowupRow,
-  getFollowupByIdSafe,
-  upsertFollowup,
-} from "@/repos/local/followups.repo";
-import { PatientSettingsRow } from "@/repos/local/patientSettings.repo";
-import { ReadingRow } from "@/repos/local/readings.repo";
 import { addMinutes } from "date-fns";
 import {
   cancelScheduledNotificationAsync,
@@ -15,6 +5,16 @@ import {
   SchedulableTriggerInputTypes,
   scheduleNotificationAsync,
 } from "expo-notifications";
+import { toMinutes } from "../components/OverrideWindowSettings";
+import { FollowupType } from "../db/schema";
+import { isTargetInWindow } from "../processReading/utils";
+import {
+  FollowupRow,
+  getFollowupByIdSafe,
+  upsertFollowup,
+} from "../repos/local/followups.repo";
+import { PatientSettingsRow } from "../repos/local/patientSettings.repo";
+import { ReadingRow } from "../repos/local/readings.repo";
 
 export type NotificationData = {
   followup: FollowupType;
@@ -22,7 +22,7 @@ export type NotificationData = {
   readingId: string;
 };
 
-export const cancelNotificationsOnFollowup = async (followupId: string) => {
+export const cancelNotificationsOfFollowup = async (followupId: string) => {
   const followup = await getFollowupByIdSafe(followupId);
   if (!followup) return;
   if (!followup?.scheduledNotificationIds?.length) return;
@@ -77,8 +77,8 @@ export const scheduleNextNotifications = async (
   const isInWindow =
     personalSettings.windowStartMinuteOfDay &&
     personalSettings.windowEndMinuteOfDay &&
-    isNowInWindow(
-      toMinutes(new Date()),
+    isTargetInWindow(
+      toMinutes(notificationDate),
       personalSettings.windowStartMinuteOfDay,
       personalSettings.windowEndMinuteOfDay,
     );
@@ -111,6 +111,7 @@ export const scheduleNextNotifications = async (
       },
       (_, index) =>
         scheduleNotificationAsync({
+          identifier: `${followup.id}-${index}`,
           content: {
             title: `Time to ${titleMessage}!`,
             body: "Tap here to complete the action",
@@ -128,8 +129,8 @@ export const scheduleNextNotifications = async (
               index *
                 (isInWindow
                   ? personalSettings.windowNotificationSpacingMinutes ||
-                    personalSettings.followupSpacingMinutes
-                  : personalSettings.followupSpacingMinutes),
+                    personalSettings.notificationSpacingMinutes
+                  : personalSettings.notificationSpacingMinutes),
             ),
           },
         }),
@@ -137,4 +138,14 @@ export const scheduleNextNotifications = async (
   );
 
   return scheduledResults;
+};
+
+export const getNotificationIdsByEntity = async (
+  entityId: string,
+): Promise<string[]> => {
+  const activeNotifications = await getAllScheduledNotificationsAsync();
+  const entityNotifications = activeNotifications.filter((notification) =>
+    notification.identifier.startsWith(`${entityId}-`),
+  );
+  return entityNotifications.map((notification) => notification.identifier);
 };

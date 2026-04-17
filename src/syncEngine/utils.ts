@@ -1,9 +1,9 @@
-import { Action, FollowupStatus } from "@/db/schema";
-import { FollowupRow } from "@/repos/local/followups.repo";
-import { PatientSettingsRow } from "@/repos/local/patientSettings.repo";
-import { ReadingRow } from "@/repos/local/readings.repo";
-import { getErrorMessage } from "@/repos/utils";
-import { Database } from "@/types/database.types";
+import { Action, FollowupStatus } from "@/src/db/schema";
+import { FollowupRow } from "@/src/repos/local/followups.repo";
+import { PatientSettingsRow } from "@/src/repos/local/patientSettings.repo";
+import { ReadingRow } from "@/src/repos/local/readings.repo";
+import { getErrorMessage } from "@/src/repos/utils";
+import { Database } from "@/src/types/database.types";
 import {
   BasicLocalEntityShape,
   BasicLocalInsertEntityShape,

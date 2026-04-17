@@ -1,4 +1,4 @@
-import { Action, FollowupType, Intervention } from "@/db/schema";
+import { Action, FollowupType, Intervention } from "@/src/db/schema";
 import { useState } from "react";
 import { View } from "react-native";
 import { TextInput } from "react-native-paper";

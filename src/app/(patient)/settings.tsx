@@ -1,12 +1,12 @@
-import PatientSettingsFields from "@/components/PatientSettingsFields";
-import ThresholdRuleInput from "@/components/ThresholdRuleInput";
-import { useGetProfile } from "@/hooks/profile";
-import { upsertProfile } from "@/repos/local/profiles.repo";
+import PatientSettingsFields from "@/src/components/PatientSettingsFields";
+import ThresholdRuleInput from "@/src/components/ThresholdRuleInput";
+import { useGetProfile } from "@/src/hooks/profile";
+import { upsertProfile } from "@/src/repos/local/profiles.repo";
 import {
   listThresholdRulesByPatient,
   ThresholdRuleRow,
-} from "@/repos/local/thresholdRules.repo";
-import { runSync } from "@/services/syncService";
+} from "@/src/repos/local/thresholdRules.repo";
+import { runSync } from "@/src/syncEngine/syncService";
 import { useEffect, useState } from "react";
 import {
   Keyboard,

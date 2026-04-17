@@ -1,6 +1,4 @@
-import { DecisionType, FollowupType, Intervention } from "@/db/schema";
-import supabase from "@/lib/supabase";
-import { ReadingInsert } from "@/repos/local/readings.repo";
+
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import { View } from "react-native";
@@ -14,6 +12,9 @@ import CornPhotoStep from "./CornPhotoStep";
 import EarlyDecisionStep from "./EarlyDecisionStep";
 import MeterPhotoStep from "./MeterPhotoStep";
 import NumberStep from "./NumberStep";
+import { DecisionType, FollowupType, Intervention } from "@/src/db/schema";
+import { ReadingInsert } from "@/src/repos/local/readings.repo";
+import supabase from "@/src/db/supabase";
 
 export type StepFuncProps = {
   followup: FollowupType;

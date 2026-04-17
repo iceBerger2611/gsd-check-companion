@@ -1,7 +1,7 @@
 import {
   useSupervisorCurrentPatient,
   useSupervisorPatients,
-} from "@/hooks/supervisorPatient";
+} from "@/src/hooks/supervisorPatient";
 import { View, ViewStyle } from "react-native";
 import { List, Text } from "react-native-paper";
 import Toast from "react-native-toast-message";

@@ -1,8 +1,8 @@
-import { RunSyncResult, SyncStateAtom } from "@/hooks/sync";
-import { getErrorMessage, nowIso } from "@/repos/utils";
+import { RunSyncResult, SyncStateAtom } from "@/src/hooks/sync";
+import { getErrorMessage, nowIso } from "@/src/repos/utils";
 import { store } from "@/store";
-import { pullChanges } from "@/syncEngine/pull";
-import { pushPendingChanges } from "@/syncEngine/push";
+import { pullChanges } from "@/src/syncEngine/pull";
+import { pushPendingChanges } from "@/src/syncEngine/push";
 
 const syncWork = async (): Promise<RunSyncResult> => {
   const pushed = await pushPendingChanges();

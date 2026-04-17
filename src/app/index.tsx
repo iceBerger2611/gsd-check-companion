@@ -1,10 +1,10 @@
-import { GetUserProfile } from "@/db/operations";
-import supabase from "@/lib/supabase";
-import { runSync } from "@/services/syncService";
 import { ErrorBoundaryProps, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
+import { GetUserProfile } from "../db/authOperations";
+import supabase from "../db/supabase";
+import { runSync } from "../syncEngine/syncService";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (

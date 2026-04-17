@@ -1,4 +1,4 @@
-import { DecisionType, FollowupType, Intervention } from "@/db/schema";
+import { DecisionType, FollowupType, Intervention } from "@/src/db/schema";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, SegmentedButtons, Text, TextInput } from "react-native-paper";

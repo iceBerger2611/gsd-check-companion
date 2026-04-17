@@ -1,6 +1,6 @@
 import * as Crypto from "expo-crypto";
-import { Action, followupTypes, interventions } from "@/db/schema";
-import { Database } from "@/types/database.types";
+import { Action, followupTypes, interventions } from "@/src/db/schema";
+import { Database } from "@/src/types/database.types";
 import { CareLinkInsert, CareLinkRow } from "./local/careLinks.repo";
 import { FollowupInsert, FollowupRow } from "./local/followups.repo";
 import {

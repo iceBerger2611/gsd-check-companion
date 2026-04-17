@@ -1,4 +1,4 @@
-import { LogIn } from "@/db/operations";
+import { LogIn } from "@/src/db/authOperations";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";

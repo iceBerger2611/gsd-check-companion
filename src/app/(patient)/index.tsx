@@ -1,8 +1,8 @@
-import Home from "@/components/Home";
-import { FollowupType } from "@/db/schema";
-import { useGetProfile } from "@/hooks/profile";
-import { usePatientSettings } from "@/hooks/settings";
-import { requestPermissionForNotifications } from "@/notifications/register";
+import Home from "@/src/components/Home";
+import { FollowupType } from "@/src/db/schema";
+import { useGetProfile } from "@/src/hooks/profile";
+import { usePatientSettings } from "@/src/hooks/settings";
+import { requestPermissionForNotifications } from "@/src/notifications/register";
 import { useRouter } from "expo-router/build/hooks";
 import { useEffect, useState } from "react";
 import { View } from "react-native";

@@ -1,4 +1,4 @@
-import { useSupervisorCurrentPatient } from "@/hooks/supervisorPatient";
+import { useSupervisorCurrentPatient } from "@/src/hooks/supervisorPatient";
 import { Text } from "react-native-paper";
 
 const DashboardTitle = () => {

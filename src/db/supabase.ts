@@ -1,7 +1,7 @@
 import 'react-native-url-polyfill/auto'
 import { createClient, SupportedStorage } from '@supabase/supabase-js'
 import 'expo-sqlite/localStorage/install';
-import { Database } from '@/types/database.types';
+import { Database } from '@/src/types/database.types';
 import { deleteItemAsync, getItemAsync, setItemAsync } from 'expo-secure-store'
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || ''

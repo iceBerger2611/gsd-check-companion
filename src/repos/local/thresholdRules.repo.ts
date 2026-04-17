@@ -1,6 +1,6 @@
-import { db } from "@/db/client";
-import { mapDbError, NotFoundError } from "@/db/errors";
-import { thresholdRules } from "@/db/schema";
+import { db } from "@/src/db/client";
+import { mapDbError, NotFoundError } from "@/src/db/errors";
+import { thresholdRules } from "@/src/db/schema";
 import { desc, eq, inArray } from "drizzle-orm";
 import {
   buildPendingCreateFields,

@@ -1,11 +1,12 @@
-import supabase from "@/lib/supabase";
-import { listSupervisorCareLinks } from "@/repos/local/careLinks.repo";
-import { getProfileByIdSafe, ProfileRow } from "@/repos/local/profiles.repo";
-import { upsertReading } from "@/repos/local/readings.repo";
-import { Database } from "@/types/database.types";
-import { Profile } from "@/types/tables.types";
+
 import { Session, User } from "@supabase/supabase-js";
 import { identifySupabaseError } from "./utils";
+import { Profile } from "../types/tables.types";
+import supabase from "./supabase";
+import { listSupervisorCareLinks } from "../repos/local/careLinks.repo";
+import { getProfileByIdSafe, ProfileRow } from "../repos/local/profiles.repo";
+import { Database } from "../types/database.types";
+import { upsertReading } from "../repos/local/readings.repo";
 
 interface AuthInRes {
   session: Session | null;

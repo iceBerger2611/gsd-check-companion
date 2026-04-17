@@ -1,8 +1,8 @@
-import { appTheme } from "@/lib/theme";
+import { appTheme } from "@/src/lib/theme";
 import {
   FollowupRow,
   getNextPendingFollowup,
-} from "@/repos/local/followups.repo";
+} from "@/src/repos/local/followups.repo";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { View } from "react-native";

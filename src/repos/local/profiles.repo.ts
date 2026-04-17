@@ -1,6 +1,6 @@
-import { db } from "@/db/client";
-import { mapDbError, NotFoundError } from "@/db/errors";
-import { profiles } from "@/db/schema";
+import { db } from "@/src/db/client";
+import { mapDbError, NotFoundError } from "@/src/db/errors";
+import { profiles } from "@/src/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import {
   buildPendingCreateFields,

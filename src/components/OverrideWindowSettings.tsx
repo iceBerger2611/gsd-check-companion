@@ -1,6 +1,6 @@
-import { usePatientSettings } from "@/hooks/settings";
-import { upsertPatientSettings } from "@/repos/local/patientSettings.repo";
-import { runSync } from "@/services/syncService";
+import { usePatientSettings } from "@/src/hooks/settings";
+import { upsertPatientSettings } from "@/src/repos/local/patientSettings.repo";
+import { runSync } from "@/src/syncEngine/syncService";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { View } from "react-native";
@@ -119,7 +119,7 @@ const OverrideWindowSettings = () => {
   return (
     <>
       <Text variant="headlineSmall">Special behaviour</Text>
-      <View style={{ flexDirection: "row", alignItems: 'center', gap: 5 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
         <Text>Start Time</Text>
         <DateTimePicker
           mode="time"
@@ -134,7 +134,7 @@ const OverrideWindowSettings = () => {
         />
         <Text>End Time</Text>
       </View>
-     
+
       <TextInput
         label="time between meals"
         placeholder="enter in minutes"

@@ -1,6 +1,6 @@
-import { db } from "@/db/client";
-import { mapDbError, NotFoundError } from "@/db/errors";
-import { careLinks } from "@/db/schema";
+import { db } from "@/src/db/client";
+import { mapDbError, NotFoundError } from "@/src/db/errors";
+import { careLinks } from "@/src/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { nowIso } from "../utils";
 

@@ -1,5 +1,5 @@
-import PatientsList from "@/components/PatientsList";
-import SupervisorCode from "@/components/SupervisorCode";
+import PatientsList from "@/src/components/PatientsList";
+import SupervisorCode from "@/src/components/SupervisorCode";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 
 export default function Screen() {

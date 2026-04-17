@@ -1,7 +1,7 @@
-import CreateCodeModal from "@/components/CreateCodeModal";
-import supabase from "@/lib/supabase";
-import { appTheme } from "@/lib/theme";
-import { runSync } from "@/services/syncService";
+import CreateCodeModal from "@/src/components/CreateCodeModal";
+import supabase from "@/src/db/supabase";
+import { appTheme } from "@/src/lib/theme";
+import { runSync } from "@/src/syncEngine/syncService";
 import { NativeStackHeaderProps } from "@react-navigation/native-stack";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
@@ -47,7 +47,12 @@ const PatientHeader = ({
         <Modal
           visible={isModalVisible}
           onDismiss={() => setIsModalVisible(false)}
-          contentContainerStyle={{ backgroundColor: "white", padding: 20, height: '60%', marginHorizontal: 50 }}
+          contentContainerStyle={{
+            backgroundColor: "white",
+            padding: 20,
+            height: "60%",
+            marginHorizontal: 50,
+          }}
         >
           <CreateCodeModal />
         </Modal>

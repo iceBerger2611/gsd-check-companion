@@ -1,5 +1,5 @@
-import supabase from "@/lib/supabase";
-import { getProfileById, ProfileRow } from "@/repos/local/profiles.repo";
+import supabase from "@/src/db/supabase";
+import { getProfileById, ProfileRow } from "@/src/repos/local/profiles.repo";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { SyncStateAtom } from "./sync";

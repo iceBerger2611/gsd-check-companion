@@ -1,4 +1,4 @@
-import { createCareLinkInvite } from "@/repos/remote/careLinkInvites.remote";
+import { createCareLinkInvite } from "@/src/repos/remote/careLinkInvites.remote";
 import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 import { View } from "react-native";

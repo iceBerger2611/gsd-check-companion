@@ -1,8 +1,8 @@
-import { usePatientSettings } from "@/hooks/settings";
-import { upsertPatientSettings } from "@/repos/local/patientSettings.repo";
-import { ProfileRow } from "@/repos/local/profiles.repo";
-import { createBasicPatientSettings } from "@/repos/utils";
-import { runSync } from "@/services/syncService";
+import { usePatientSettings } from "@/src/hooks/settings";
+import { upsertPatientSettings } from "@/src/repos/local/patientSettings.repo";
+import { ProfileRow } from "@/src/repos/local/profiles.repo";
+import { createBasicPatientSettings } from "@/src/repos/utils";
+import { runSync } from "@/src/syncEngine/syncService";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, TextInput } from "react-native-paper";

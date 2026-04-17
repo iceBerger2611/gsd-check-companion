@@ -1,10 +1,10 @@
-import { followupStateRank, FollowupStatus } from "@/db/schema";
-import { CareLinkRow } from "@/repos/local/careLinks.repo";
-import { FollowupRow } from "@/repos/local/followups.repo";
-import { PatientSettingsRow } from "@/repos/local/patientSettings.repo";
-import { ProfileRow } from "@/repos/local/profiles.repo";
-import { ReadingRow } from "@/repos/local/readings.repo";
-import { ThresholdRuleRow } from "@/repos/local/thresholdRules.repo";
+import { followupStateRank, FollowupStatus } from "@/src/db/schema";
+import { CareLinkRow } from "@/src/repos/local/careLinks.repo";
+import { FollowupRow } from "@/src/repos/local/followups.repo";
+import { PatientSettingsRow } from "@/src/repos/local/patientSettings.repo";
+import { ProfileRow } from "@/src/repos/local/profiles.repo";
+import { ReadingRow } from "@/src/repos/local/readings.repo";
+import { ThresholdRuleRow } from "@/src/repos/local/thresholdRules.repo";
 import {
   RemoteCareLinkUpsertPayload,
   RemoteFollowupUpsertPayload,
@@ -12,7 +12,7 @@ import {
   RemoteProfileUpsertPayload,
   RemoteReadingUpsertPayload,
   RemoteThresholdRuleUpsertPayload,
-} from "@/repos/utils";
+} from "@/src/repos/utils";
 import {
   compareFields,
   createDefaultResolver,

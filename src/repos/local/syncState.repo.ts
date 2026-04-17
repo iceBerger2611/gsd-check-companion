@@ -1,6 +1,6 @@
-import { db } from "@/db/client";
-import { mapDbError } from "@/db/errors";
-import { syncState } from "@/db/schema";
+import { db } from "@/src/db/client";
+import { mapDbError } from "@/src/db/errors";
+import { syncState } from "@/src/db/schema";
 import { eq, InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { nowIso } from "../utils";
 

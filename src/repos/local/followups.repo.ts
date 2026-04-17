@@ -1,6 +1,6 @@
-import { db } from "@/db/client";
-import { mapDbError, NotFoundError } from "@/db/errors";
-import { followups } from "@/db/schema";
+import { db } from "@/src/db/client";
+import { mapDbError, NotFoundError } from "@/src/db/errors";
+import { followups } from "@/src/db/schema";
 import { and, asc, desc, eq, inArray, lte } from "drizzle-orm";
 import {
   buildPendingCreateFields,

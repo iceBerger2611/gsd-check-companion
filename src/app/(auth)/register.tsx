@@ -1,4 +1,4 @@
-import { Register, updateProfileRole } from "@/db/operations";
+import { Register, updateProfileRole } from "@/src/db/authOperations";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";

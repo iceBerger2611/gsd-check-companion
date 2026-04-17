@@ -2,9 +2,9 @@ import {
   getPatientSettingsOfPatient,
   PatientSettingsRow,
   upsertPatientSettings,
-} from "@/repos/local/patientSettings.repo";
-import { createBasicPatientSettings } from "@/repos/utils";
-import { runSync } from "@/services/syncService";
+} from "@/src/repos/local/patientSettings.repo";
+import { createBasicPatientSettings } from "@/src/repos/utils";
+import { runSync } from "@/src/syncEngine/syncService";
 import { useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 import { useGetProfile } from "./profile";

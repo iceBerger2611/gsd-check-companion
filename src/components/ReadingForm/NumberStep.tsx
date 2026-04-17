@@ -1,8 +1,8 @@
-import { ReadingInsert } from "@/repos/readings.repo";
 import { useState } from "react";
 import { View } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { StepFuncProps } from "./utils";
+import { ReadingInsert } from "@/src/repos/local/readings.repo";
 
 const NumberStep = ({
   followup,

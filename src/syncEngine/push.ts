@@ -5,7 +5,7 @@ import {
   markCareLinkFailed,
   markCareLinkSynced,
   upsertCareLinkFromRemote,
-} from "@/repos/local/careLinks.repo";
+} from "@/src/repos/local/careLinks.repo";
 import {
   FollowupInsert,
   FollowupRow,
@@ -13,7 +13,7 @@ import {
   markFollowupFailed,
   markFollowupSynced,
   upsertFollowupFromRemote,
-} from "@/repos/local/followups.repo";
+} from "@/src/repos/local/followups.repo";
 import {
   listPendingPatientSettingss,
   markPatientSettingsFailed,
@@ -21,7 +21,7 @@ import {
   PatientSettingsInsert,
   PatientSettingsRow,
   upsertPatientSettingsFromRemote,
-} from "@/repos/local/patientSettings.repo";
+} from "@/src/repos/local/patientSettings.repo";
 import {
   listPendingProfiles,
   markProfileFailed,
@@ -29,7 +29,7 @@ import {
   ProfileInsert,
   ProfileRow,
   upsertProfileFromRemote,
-} from "@/repos/local/profiles.repo";
+} from "@/src/repos/local/profiles.repo";
 import {
   listPendingReadings,
   markReadingFailed,
@@ -37,7 +37,7 @@ import {
   ReadingInsert,
   ReadingRow,
   upsertReadingFromRemote,
-} from "@/repos/local/readings.repo";
+} from "@/src/repos/local/readings.repo";
 import {
   listPendingThresholdRules,
   markThresholdRuleFailed,
@@ -45,37 +45,37 @@ import {
   ThresholdRuleInsert,
   ThresholdRuleRow,
   upsertThresholdRuleFromRemote,
-} from "@/repos/local/thresholdRules.repo";
+} from "@/src/repos/local/thresholdRules.repo";
 import {
   getRemoteCareLinkByIdSafe,
   RemoteCareLink,
   upsertRemoteCareLink,
-} from "@/repos/remote/careLinks.remote";
+} from "@/src/repos/remote/careLinks.remote";
 import {
   getRemoteFollowupByIdSafe,
   RemoteFollowup,
   upsertRemoteFollowup,
-} from "@/repos/remote/followups.remote";
+} from "@/src/repos/remote/followups.remote";
 import {
   getRemotePatientSettingsByIdSafe,
   RemotePatientSettings,
   upsertRemotePatientSettings,
-} from "@/repos/remote/patientSettings.remote";
+} from "@/src/repos/remote/patientSettings.remote";
 import {
   getRemoteProfileByIdSafe,
   RemoteProfile,
   upsertRemoteProfile,
-} from "@/repos/remote/profiles.remote";
+} from "@/src/repos/remote/profiles.remote";
 import {
   getRemoteReadingByIdSafe,
   RemoteReading,
   upsertRemoteReading,
-} from "@/repos/remote/readings.remote";
+} from "@/src/repos/remote/readings.remote";
 import {
   getRemoteThresholdRuleByIdSafe,
   RemoteThresholdRule,
   upsertRemoteThresholdRule,
-} from "@/repos/remote/thresholdRules.remote";
+} from "@/src/repos/remote/thresholdRules.remote";
 import {
   getErrorMessage,
   mapLocalCareLinkToRemote,
@@ -96,7 +96,7 @@ import {
   RemoteProfileUpsertPayload,
   RemoteReadingUpsertPayload,
   RemoteThresholdRuleUpsertPayload,
-} from "@/repos/utils";
+} from "@/src/repos/utils";
 import {
   resolveCareLinkConflict,
   resolveFollowupConflict,

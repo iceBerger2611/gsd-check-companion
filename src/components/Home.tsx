@@ -1,6 +1,6 @@
-import NextDue from "@/components/NextDue";
-import RecentHistory from "@/components/RecentHistory";
-import { ProfileRow } from "@/repos/local/profiles.repo";
+import NextDue from "@/src/components/NextDue";
+import RecentHistory from "@/src/components/RecentHistory";
+import { ProfileRow } from "@/src/repos/local/profiles.repo";
 import { ScrollView, View } from "react-native";
 import { Text } from "react-native-paper";
 

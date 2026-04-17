@@ -1,6 +1,6 @@
-import { claimCareLinkInvite } from "@/repos/remote/careLinkInvites.remote";
-import { getErrorMessage } from "@/repos/utils";
-import { runSync } from "@/services/syncService";
+import { claimCareLinkInvite } from "@/src/repos/remote/careLinkInvites.remote";
+import { getErrorMessage } from "@/src/repos/utils";
+import { runSync } from "@/src/syncEngine/syncService";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, TextInput } from "react-native-paper";

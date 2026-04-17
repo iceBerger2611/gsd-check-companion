@@ -1,6 +1,6 @@
-import ReadingForm from "@/components/ReadingForm";
-import { useGetProfile } from "@/hooks/profile";
-import { NotificationData } from "@/notifications/scheduler";
+import ReadingForm from "@/src/components/ReadingForm";
+import { useGetProfile } from "@/src/hooks/profile";
+import { NotificationData } from "@/src/notifications/scheduler";
 import { useLocalSearchParams } from "expo-router/build/hooks";
 import { View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";

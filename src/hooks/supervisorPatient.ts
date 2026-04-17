@@ -1,7 +1,7 @@
-import { GetPatientsOfSupervisor } from "@/db/operations";
+import { GetPatientsOfSupervisor } from "@/src/db/authOperations";
 import { useEffect, useState } from "react";
 import { useGetProfile } from "./profile";
-import { ProfileRow } from "@/repos/local/profiles.repo";
+import { ProfileRow } from "@/src/repos/local/profiles.repo";
 import { atom, useAtom } from "jotai";
 
 export const useSupervisorPatients = () => {

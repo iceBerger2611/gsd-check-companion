@@ -1,7 +1,7 @@
-import { DecisionType, FollowupType } from "@/db/schema";
-import { usePatientSettings } from "@/hooks/settings";
-import { processReading } from "@/lib/readings";
-import { ReadingInsert } from "@/repos/local/readings.repo";
+import { DecisionType, FollowupType } from "@/src/db/schema";
+import { usePatientSettings } from "@/src/hooks/settings";
+import { runProcessReading } from "@/src/processReading/processReadingService";
+import { ReadingInsert } from "@/src/repos/local/readings.repo";
 import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -65,19 +65,19 @@ const ReadingForm = ({
 
       if (!settings) return;
 
-      const res = await processReading(
+      const res = await runProcessReading(
         reading,
         settings,
         latestEarlyDecision,
         sourceFollowupId,
       );
       Toast.show({
-        type: res instanceof Error ? "error" : "success",
-        text1: res instanceof Error ? res.message : "Reading Saved",
+        type: !res.isSuccessful ? "error" : "success",
+        text1: !res.isSuccessful ? res.error : "Reading Saved",
       });
 
       if (
-        !(res instanceof Error) &&
+        !(!res.isSuccessful) &&
         latestPhotoUri?.cornstarch &&
         reading.cornstarchPhotoUrl
       ) {
@@ -88,7 +88,7 @@ const ReadingForm = ({
       }
 
       if (
-        !(res instanceof Error) &&
+        !(!res.isSuccessful) &&
         latestPhotoUri?.meter &&
         reading.meterPhotoUrl
       ) {

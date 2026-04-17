@@ -1,6 +1,6 @@
-import Home from "@/components/Home";
-import { useGetProfile } from "@/hooks/profile";
-import { useSupervisorCurrentPatient } from "@/hooks/supervisorPatient";
+import Home from "@/src/components/Home";
+import { useGetProfile } from "@/src/hooks/profile";
+import { useSupervisorCurrentPatient } from "@/src/hooks/supervisorPatient";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
 

@@ -1,9 +1,9 @@
-import { PushPendingResult } from "@/db/sync";
 import { atom } from "jotai";
+import { PullResult, PushPendingResult } from "../syncEngine/types";
 
 export type RunSyncResult = {
   pushed: PushPendingResult;
-  pulled: number;
+  pulled: PullResult;
 };
 
 export type SyncState = {
@@ -12,7 +12,7 @@ export type SyncState = {
   lastSyncError: string | null;
   lastSyncResult: {
     pushed: PushPendingResult;
-    pulled: number;
+    pulled: PullResult;
   } | null;
 };
 
