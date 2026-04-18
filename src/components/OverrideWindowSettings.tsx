@@ -1,7 +1,8 @@
-import { usePatientSettings } from "@/src/hooks/settings";
+import { PatientSettingsAtom } from "@/src/hooks/settings";
 import { upsertPatientSettings } from "@/src/repos/local/patientSettings.repo";
 import { runSync } from "@/src/syncEngine/syncService";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
@@ -42,7 +43,7 @@ const getSaveErrorMessege = (
 };
 
 const OverrideWindowSettings = () => {
-  const { settings } = usePatientSettings();
+  const settings = useAtomValue(PatientSettingsAtom);
 
   const baseWindowStartDate = fromMinutes(
     settings?.windowStartMinuteOfDay || 0,

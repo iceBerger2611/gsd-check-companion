@@ -1,5 +1,6 @@
 import DashboardTitle from "@/src/components/DashboardTitle";
 import supabase from "@/src/db/supabase";
+import { useSyncSupervisorCurrentPatient } from "@/src/hooks/supervisorPatient";
 import { runSync } from "@/src/syncEngine/syncService";
 import { useRouter } from "expo-router";
 import { Drawer } from "expo-router/drawer";
@@ -38,6 +39,8 @@ const SupervisorHeader = () => {
 };
 
 export default function Layout() {
+  useSyncSupervisorCurrentPatient();
+
   return (
     <Drawer
       initialRouteName="dashboard"

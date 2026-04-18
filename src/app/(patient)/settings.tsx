@@ -1,12 +1,13 @@
 import PatientSettingsFields from "@/src/components/PatientSettingsFields";
 import ThresholdRuleInput from "@/src/components/ThresholdRuleInput";
-import { useGetProfile } from "@/src/hooks/profile";
+import { UserProfileAtom } from "@/src/hooks/profile";
 import { upsertProfile } from "@/src/repos/local/profiles.repo";
 import {
   listThresholdRulesByPatient,
   ThresholdRuleRow,
 } from "@/src/repos/local/thresholdRules.repo";
 import { runSync } from "@/src/syncEngine/syncService";
+import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import {
   Keyboard,
@@ -14,18 +15,11 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import {
-  ActivityIndicator,
-  Button,
-  Divider,
-  List,
-  Text,
-  TextInput,
-} from "react-native-paper";
+import { Button, Divider, List, TextInput } from "react-native-paper";
 import Toast from "react-native-toast-message";
 
 const PatientSettings = () => {
-  const { isFetching, profile: patient } = useGetProfile();
+  const patient = useAtomValue(UserProfileAtom);
   const [displayName, setDispalyName] = useState(patient?.displayName);
   const [thresholdRules, setThresholdRules] = useState<ThresholdRuleRow[]>([]);
   const [ThreshExpanded, setThreshExpanded] = useState(false);
@@ -66,60 +60,53 @@ const PatientSettings = () => {
         justifyContent: "flex-start",
       }}
     >
-      {isFetching ? (
-        <View>
-          <Text>Loading Data...</Text>
-          <ActivityIndicator animating />
-        </View>
-      ) : (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <ScrollView
-            style={{ gap: 15, marginBottom: 200 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <TextInput
-              label="display name"
-              placeholder="enter your display name"
-              mode="outlined"
-              value={displayName || undefined}
-              onChangeText={(text) => setDispalyName(text)}
-            />
-            {patient?.displayName !== displayName && (
-              <Button uppercase mode="contained" onPress={onDisplaySave}>
-                SAVE
-              </Button>
-            )}
-            <List.Section>
-              <List.Accordion
-                title="Thresholds"
-                expanded={ThreshExpanded}
-                onPress={() => setThreshExpanded((prev) => !prev)}
-              >
-                <View style={{ gap: 10, paddingTop: 20 }}>
-                  {thresholdRules.map((thresholdRule) => (
-                    <View key={thresholdRule.id}>
-                      <Divider bold />
-                      <ThresholdRuleInput
-                        key={thresholdRule.id}
-                        threshold={thresholdRule}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </List.Accordion>
-            </List.Section>
-            <List.Section>
-              <List.Accordion
-                title="Patient Settings"
-                expanded={patientExpanded}
-                onPress={() => setPatientExpanded((prev) => !prev)}
-              >
-                {patient && <PatientSettingsFields patient={patient} />}
-              </List.Accordion>
-            </List.Section>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      )}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          style={{ gap: 15, marginBottom: 200 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TextInput
+            label="display name"
+            placeholder="enter your display name"
+            mode="outlined"
+            value={displayName || undefined}
+            onChangeText={(text) => setDispalyName(text)}
+          />
+          {patient?.displayName !== displayName && (
+            <Button uppercase mode="contained" onPress={onDisplaySave}>
+              SAVE
+            </Button>
+          )}
+          <List.Section>
+            <List.Accordion
+              title="Thresholds"
+              expanded={ThreshExpanded}
+              onPress={() => setThreshExpanded((prev) => !prev)}
+            >
+              <View style={{ gap: 10, paddingTop: 20 }}>
+                {thresholdRules.map((thresholdRule) => (
+                  <View key={thresholdRule.id}>
+                    <Divider bold />
+                    <ThresholdRuleInput
+                      key={thresholdRule.id}
+                      threshold={thresholdRule}
+                    />
+                  </View>
+                ))}
+              </View>
+            </List.Accordion>
+          </List.Section>
+          <List.Section>
+            <List.Accordion
+              title="Patient Settings"
+              expanded={patientExpanded}
+              onPress={() => setPatientExpanded((prev) => !prev)}
+            >
+              {patient && <PatientSettingsFields patient={patient} />}
+            </List.Accordion>
+          </List.Section>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </View>
   );
 };

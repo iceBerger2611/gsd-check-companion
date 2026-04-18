@@ -1,18 +1,16 @@
 import Home from "@/src/components/Home";
 import { FollowupType } from "@/src/db/schema";
-import { useGetProfile } from "@/src/hooks/profile";
-import { usePatientSettings } from "@/src/hooks/settings";
+import { UserProfileAtom } from "@/src/hooks/profile";
 import { requestPermissionForNotifications } from "@/src/notifications/register";
 import { useRouter } from "expo-router/build/hooks";
+import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { ActivityIndicator, Button, Menu, Text } from "react-native-paper";
 
 const PatientPage = () => {
   const router = useRouter();
-  const { profile: patient } = useGetProfile();
-  // eslint-disable-next-line no-empty-pattern
-  const {} = usePatientSettings();
+  const patient = useAtomValue(UserProfileAtom);
   const [isLogMenuVisible, setIsLogMenuVisible] = useState(false);
 
   useEffect(() => {

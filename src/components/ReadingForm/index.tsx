@@ -1,9 +1,10 @@
 import { DecisionType, FollowupType } from "@/src/db/schema";
-import { usePatientSettings } from "@/src/hooks/settings";
+import { PatientSettingsAtom } from "@/src/hooks/settings";
 import { runProcessReading } from "@/src/processReading/processReadingService";
 import { ReadingInsert } from "@/src/repos/local/readings.repo";
 import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
+import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -39,7 +40,7 @@ const ReadingForm = ({
 
   const router = useRouter();
 
-  const { settings } = usePatientSettings();
+  const settings = useAtomValue(PatientSettingsAtom);
 
   useEffect(() => {
     photoUriRef.current = photoUri;
@@ -77,7 +78,7 @@ const ReadingForm = ({
       });
 
       if (
-        !(!res.isSuccessful) &&
+        !!res.isSuccessful &&
         latestPhotoUri?.cornstarch &&
         reading.cornstarchPhotoUrl
       ) {
@@ -88,7 +89,7 @@ const ReadingForm = ({
       }
 
       if (
-        !(!res.isSuccessful) &&
+        !!res.isSuccessful &&
         latestPhotoUri?.meter &&
         reading.meterPhotoUrl
       ) {

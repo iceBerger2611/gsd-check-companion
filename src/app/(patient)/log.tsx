@@ -1,21 +1,15 @@
 import ReadingForm from "@/src/components/ReadingForm";
-import { useGetProfile } from "@/src/hooks/profile";
+import { UserProfileAtom } from "@/src/hooks/profile";
 import { NotificationData } from "@/src/notifications/scheduler";
 import { useLocalSearchParams } from "expo-router/build/hooks";
-import { View } from "react-native";
-import { ActivityIndicator, Text } from "react-native-paper";
+import { useAtomValue } from "jotai";
 
 export default function Screen() {
   const { followup, followupId } =
     useLocalSearchParams<Partial<NotificationData>>();
-  const { isFetching, profile: patient } = useGetProfile();
+  const patient = useAtomValue(UserProfileAtom);
 
-  return isFetching ? (
-    <View>
-      <Text>Loading Data...</Text>
-      <ActivityIndicator animating />
-    </View>
-  ) : (
+  return (
     <ReadingForm
       followup={followup ?? "recheck"}
       patientId={patient?.id ?? ""}

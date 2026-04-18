@@ -1,10 +1,11 @@
-import {
-  useSupervisorCurrentPatient,
-  useSupervisorPatients,
-} from "@/src/hooks/supervisorPatient";
+import { CurrentPatientAtom } from "@/src/hooks/supervisorPatient";
+import { useAtom, useAtomValue } from "jotai";
+import { useEffect, useState } from "react";
 import { View, ViewStyle } from "react-native";
 import { List, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { GetPatientsOfSupervisor } from "../db/authOperations";
+import { UserProfileAtom } from "../hooks/profile";
+import { ProfileRow } from "../repos/local/profiles.repo";
 
 const selectedStyle: ViewStyle = {
   borderWidth: 2,
@@ -14,9 +15,22 @@ const selectedStyle: ViewStyle = {
 };
 
 const PatientsList = () => {
-  const { currentPatient, changeCurrentPatient } =
-    useSupervisorCurrentPatient();
-  const { patients } = useSupervisorPatients();
+  const profile = useAtomValue(UserProfileAtom);
+  const [patients, setPatients] = useState<ProfileRow[]>([]);
+  const [currentPatient, changeCurrentPatient] = useAtom(CurrentPatientAtom);
+
+  useEffect(() => {
+    const fetchPatients = async (supervisorId: string) => {
+      const res = await GetPatientsOfSupervisor(supervisorId);
+      if (!res || !(res instanceof Error)) {
+        setPatients(res);
+      }
+    };
+
+    if (profile) {
+      fetchPatients(profile?.id);
+    }
+  }, [profile]);
 
   return (
     <List.Section style={{ gap: 10 }}>
@@ -30,13 +44,7 @@ const PatientsList = () => {
 
         const onPress = () => {
           if (isCurrentPatient) return;
-          const res = changeCurrentPatient(patient.id);
-          if (!res) {
-            Toast.show({
-              type: "error",
-              text1: "something went wrong",
-            });
-          }
+          changeCurrentPatient(patient);
         };
 
         return (

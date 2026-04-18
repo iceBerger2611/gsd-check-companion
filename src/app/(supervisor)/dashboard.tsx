@@ -1,12 +1,13 @@
 import Home from "@/src/components/Home";
-import { useGetProfile } from "@/src/hooks/profile";
-import { useSupervisorCurrentPatient } from "@/src/hooks/supervisorPatient";
+import { UserProfileAtom } from "@/src/hooks/profile";
+import { CurrentPatientAtom } from "@/src/hooks/supervisorPatient";
+import { useAtomValue } from "jotai";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
 
 export default function Screen() {
-  const { profile } = useGetProfile();
-  const { currentPatient } = useSupervisorCurrentPatient();
+  const profile = useAtomValue(UserProfileAtom);
+  const currentPatient = useAtomValue(CurrentPatientAtom);
 
   return !currentPatient ? (
     <View>

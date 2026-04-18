@@ -1,53 +1,30 @@
-import { GetPatientsOfSupervisor } from "@/src/db/authOperations";
-import { useEffect, useState } from "react";
-import { useGetProfile } from "./profile";
-import { ProfileRow } from "@/src/repos/local/profiles.repo";
-import { atom, useAtom } from "jotai";
+import {
+  getProfileByIdSafe,
+  ProfileRow,
+} from "@/src/repos/local/profiles.repo";
+import { atom, useAtom, useAtomValue } from "jotai";
+import { useEffect } from "react";
+import { SyncStateAtom } from "./sync";
 
-export const useSupervisorPatients = () => {
-  const { profile } = useGetProfile();
-  const [patients, setPatients] = useState<ProfileRow[]>([]);
-  const [isFetching, setIsFetching] = useState(false);
+export const CurrentPatientAtom = atom<ProfileRow | null>(null);
+
+export const useSyncSupervisorCurrentPatient = () => {
+  const [currentPatient, setCurrentPatient] = useAtom(CurrentPatientAtom);
+  const syncState = useAtomValue(SyncStateAtom);
 
   useEffect(() => {
-    const fetchPatients = async (supervisorId: string) => {
-      setIsFetching(true);
-      const res = await GetPatientsOfSupervisor(supervisorId);
-      if (!res || !(res instanceof Error)) {
-        setPatients(res);
+    const fetchCurrentPatient = async () => {
+      if (currentPatient) {
+        const patientRes = await getProfileByIdSafe(currentPatient.id);
+        if (patientRes) {
+          setCurrentPatient(patientRes);
+          return;
+        }
       }
-      setIsFetching(false);
+      setCurrentPatient(null);
     };
 
-    if (profile) {
-      fetchPatients(profile?.id);
-    }
-  }, [profile]);
-
-  return { patients, isFetching };
+    fetchCurrentPatient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncState.lastSyncAt]);
 };
-
-export const SyncStateAtom = atom<ProfileRow | null>(null);
-
-export const useSupervisorCurrentPatient = () => {
-    const [currentPatient, setCurrentPatient] = useAtom(SyncStateAtom);
-    const { patients } = useSupervisorPatients()
-
-    const changeCurrentPatient = (patientId: string) => {
-      const patient = patients.find(patient => patient.id === patientId)
-      if (patient) {
-        setCurrentPatient(patient)
-        return patientId
-      }
-      return null
-      
-    }
-
-    useEffect(() => {
-      if (!currentPatient && patients.length) {
-        setCurrentPatient(patients[0])
-      }
-    }, [currentPatient, patients, setCurrentPatient])
-
-    return { currentPatient, changeCurrentPatient }
-}

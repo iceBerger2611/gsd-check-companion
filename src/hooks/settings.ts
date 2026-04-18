@@ -1,52 +1,53 @@
 import {
+  getPatientSettingsByIdSafe,
   getPatientSettingsOfPatient,
   PatientSettingsRow,
   upsertPatientSettings,
 } from "@/src/repos/local/patientSettings.repo";
-import { createBasicPatientSettings } from "@/src/repos/utils";
-import { runSync } from "@/src/syncEngine/syncService";
-import { useEffect, useState } from "react";
+import { createBasicPatientSettings, getErrorMessage } from "@/src/repos/utils";
+import { atom, useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
 import Toast from "react-native-toast-message";
-import { useGetProfile } from "./profile";
+import { SyncStateAtom } from "./sync";
+import { UserProfileAtom } from "./profile";
 
-export const usePatientSettings = () => {
-  const { profile } = useGetProfile();
-  const [shouldCreate, setShouldCreate] = useState(false);
-  const [settings, setSettings] = useState<PatientSettingsRow | null>(null);
+export const PatientSettingsAtom = atom<PatientSettingsRow | null>(null);
+
+export const createAndGetNewPatientSettings = async (
+  patientId: string,
+): Promise<PatientSettingsRow | Error> => {
+  try {
+    const patientSettings = createBasicPatientSettings(patientId);
+    await upsertPatientSettings(patientSettings);
+    const newPatientSettings = await getPatientSettingsOfPatient(patientId);
+    return newPatientSettings;
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: getErrorMessage(error),
+    });
+    return error as Error;
+  }
+};
+
+export const useSyncPatientSettings = () => {
+  const syncState = useAtomValue(SyncStateAtom);
+  const setSettings = useSetAtom(PatientSettingsAtom);
+  const profile = useAtomValue(UserProfileAtom)
 
   useEffect(() => {
-    const setCurrentPatientSettings = async (patientId: string) => {
-      try {
-        const res = await getPatientSettingsOfPatient(patientId);
+    const fetchSettings = async (id: string) => {
+      const res = await getPatientSettingsByIdSafe(id);
+      if (res && !(res instanceof Error)) {
         setSettings(res);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        setShouldCreate(true);
+      } else {
+        setSettings(null);
       }
     };
 
-    if (!settings && profile?.id && profile.role === "patient") {
-      setCurrentPatientSettings(profile.id);
+    if (profile?.id) {
+      fetchSettings(profile.id);
     }
-  }, [profile?.id, profile?.role, settings]);
-
-  useEffect(() => {
-    const createPatientSettings = async (patientId: string) => {
-      const patientSettings = createBasicPatientSettings(patientId);
-      await upsertPatientSettings(patientSettings);
-      const newPatientSettings = await getPatientSettingsOfPatient(patientId);
-      setSettings(newPatientSettings);
-      setShouldCreate(false);
-      Toast.show({
-        type: "success",
-        text1: "New Settings Created!",
-      });
-      await runSync();
-    };
-    if (shouldCreate && !settings && profile?.id) {
-      createPatientSettings(profile.id);
-    }
-  }, [profile?.id, settings, shouldCreate]);
-
-  return { settings };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncState.lastSyncAt]);
 };

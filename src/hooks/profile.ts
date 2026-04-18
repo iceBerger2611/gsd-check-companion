@@ -1,32 +1,30 @@
-import supabase from "@/src/db/supabase";
-import { getProfileById, ProfileRow } from "@/src/repos/local/profiles.repo";
-import { useAtomValue } from "jotai";
-import { useEffect, useState } from "react";
+import {
+  getProfileByIdSafe,
+  ProfileRow,
+} from "@/src/repos/local/profiles.repo";
+import { atom, useAtom, useAtomValue } from "jotai";
+import { useEffect } from "react";
 import { SyncStateAtom } from "./sync";
 
-export const useGetProfile = () => {
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
+export const UserProfileAtom = atom<ProfileRow | null>(null);
+
+export const useProfileSync = () => {
   const syncState = useAtomValue(SyncStateAtom);
+  const [profile, setProfile] = useAtom(UserProfileAtom);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      setIsFetching(true);
-      const { data } = await supabase.auth.getSession();
-      const id = data.session?.user.id;
-      if (!id) {
-        setIsFetching(false);
-        return;
-      }
-      const res = await getProfileById(id);
-      if (!(res instanceof Error)) {
+    const fetchProfile = async (id: string) => {
+      const res = await getProfileByIdSafe(id);
+      if (res && !(res instanceof Error)) {
         setProfile(res);
+      } else {
+        setProfile(null);
       }
-      setIsFetching(false);
     };
 
-    fetchProfile();
+    if (profile?.id) {
+      fetchProfile(profile.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncState.lastSyncAt]);
-
-  return { profile, isFetching };
 };

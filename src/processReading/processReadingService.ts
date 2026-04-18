@@ -153,7 +153,7 @@ const processReading = async (
 
   if (!shouldHaveNotifications) {
     if (scheduledNotificationIdsForFollowup.length) {
-      cancelNotificationsOfFollowup(newFollowup.id);
+      await cancelNotificationsOfFollowup(newFollowup.id);
     }
     return { isSuccessful: true };
   }

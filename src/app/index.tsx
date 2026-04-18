@@ -1,10 +1,12 @@
 import { ErrorBoundaryProps, useRouter } from "expo-router";
+import { useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
-import { GetUserProfile } from "../db/authOperations";
-import supabase from "../db/supabase";
-import { runSync } from "../syncEngine/syncService";
+import { UserProfileAtom } from "../hooks/profile";
+import { PatientSettingsAtom } from "../hooks/settings";
+import { CurrentPatientAtom } from "../hooks/supervisorPatient";
+import { bootstrapAppSession } from "../lib/bootstrap";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
@@ -17,35 +19,22 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 export default function Index() {
   const router = useRouter();
+  const setProfile = useSetAtom(UserProfileAtom);
+  const setPatientSettings = useSetAtom(PatientSettingsAtom);
+  const setCurrentPatient = useSetAtom(CurrentPatientAtom);
 
   useEffect(() => {
     const handleEntry = async () => {
-      const { data } = await supabase.auth.getSession();
-      const id = data.session?.user.id;
-      if (id) {
-        const res = await GetUserProfile(id);
-        if (res && !(res instanceof Error)) {
-          await runSync();
-          const refreshed = await GetUserProfile(id);
-          if (refreshed instanceof Error) {
-            await supabase.auth.signOut();
-          } else {
-            if (res.role === "supervisor") {
-              router.navigate(`/(supervisor)/dashboard`);
-            } else {
-              router.navigate(`/(patient)`);
-            }
-          }
-        } else {
-          await supabase.auth.signOut();
-        }
-      } else {
-        router.navigate("/(auth)/login");
-      }
+      await bootstrapAppSession(
+        router,
+        setProfile,
+        setPatientSettings,
+        setCurrentPatient,
+      );
     };
 
     handleEntry();
-  }, [router]);
+  }, [router, setCurrentPatient, setPatientSettings, setProfile]);
 
   return null;
 }

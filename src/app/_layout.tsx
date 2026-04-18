@@ -5,8 +5,21 @@ import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { initLocalDB } from "../db/init";
+import { useProfileSync } from "../hooks/profile";
 import { appTheme } from "../lib/theme";
 import { useNotificationRouting } from "../notifications/listeners";
+
+function AppShell() {
+  useNotificationRouting();
+  useProfileSync();
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(patient)" />
+      <Stack.Screen name="(supervisor)" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   useEffect(() => {
@@ -14,15 +27,12 @@ export default function RootLayout() {
   }, []);
 
   useNotificationRouting();
+  useProfileSync();
 
   return (
     <JotaiProvider store={store}>
       <PaperProvider theme={appTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(patient)" />
-          <Stack.Screen name="(supervisor)" />
-        </Stack>
+        <AppShell />
         <Toast position="bottom" />
       </PaperProvider>
     </JotaiProvider>

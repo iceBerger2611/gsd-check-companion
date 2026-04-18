@@ -1,8 +1,9 @@
-import { usePatientSettings } from "@/src/hooks/settings";
+import { PatientSettingsAtom } from "@/src/hooks/settings";
 import { upsertPatientSettings } from "@/src/repos/local/patientSettings.repo";
 import { ProfileRow } from "@/src/repos/local/profiles.repo";
 import { createBasicPatientSettings } from "@/src/repos/utils";
 import { runSync } from "@/src/syncEngine/syncService";
+import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
@@ -12,7 +13,7 @@ import OverrideWindowSettings from "./OverrideWindowSettings";
 const basicSettings = createBasicPatientSettings("");
 
 const PatientSettingsFields = ({ patient }: { patient: ProfileRow }) => {
-  const { settings } = usePatientSettings();
+  const settings = useAtomValue(PatientSettingsAtom);
 
   const baseFollowupSpacing =
     settings?.followupSpacingMinutes || basicSettings.followupSpacingMinutes;

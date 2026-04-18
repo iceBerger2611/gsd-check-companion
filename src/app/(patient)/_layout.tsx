@@ -1,9 +1,16 @@
 import CreateCodeModal from "@/src/components/CreateCodeModal";
 import supabase from "@/src/db/supabase";
+import { UserProfileAtom } from "@/src/hooks/profile";
+import {
+  PatientSettingsAtom,
+  useSyncPatientSettings,
+} from "@/src/hooks/settings";
+import { CurrentPatientAtom } from "@/src/hooks/supervisorPatient";
 import { appTheme } from "@/src/lib/theme";
 import { runSync } from "@/src/syncEngine/syncService";
 import { NativeStackHeaderProps } from "@react-navigation/native-stack";
 import { Stack, useRouter } from "expo-router";
+import { useSetAtom } from "jotai";
 import { useState } from "react";
 import { Appbar, Menu, Modal, Portal } from "react-native-paper";
 
@@ -14,10 +21,16 @@ const PatientHeader = ({
 }: NativeStackHeaderProps) => {
   const [isMainMenuVisible, setIsMainMenuVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const setProfile = useSetAtom(UserProfileAtom);
+  const setCurrentPatient = useSetAtom(CurrentPatientAtom);
+  const setPatientSettings = useSetAtom(PatientSettingsAtom);
 
   const router = useRouter();
 
   const onLogout = async () => {
+    setProfile(null);
+    setCurrentPatient(null);
+    setPatientSettings(null);
     await supabase.auth.signOut();
     setIsMainMenuVisible(false);
     router.push("/(auth)/login");
@@ -81,6 +94,8 @@ const PatientHeader = ({
 };
 
 export default function RootLayout() {
+  useSyncPatientSettings();
+
   return (
     <Stack screenOptions={{ header: (props) => <PatientHeader {...props} /> }}>
       <Stack.Screen name="log" options={{ headerShown: false }} />
