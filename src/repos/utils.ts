@@ -13,6 +13,7 @@ import {
   ThresholdRuleInsert,
   ThresholdRuleRow,
 } from "./local/thresholdRules.repo";
+import { differenceInCalendarDays, isToday, isTomorrow, isYesterday } from "date-fns";
 
 export const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -49,6 +50,21 @@ export const getErrorMessage = (error: unknown): string => {
 
 export function nowIso() {
   return new Date().toISOString();
+}
+
+export function getRelativeDayLabel(date: Date) {
+  if (isToday(date)) return 'today';
+  if (isTomorrow(date)) return 'tomorrow';
+  if (isYesterday(date)) return 'yesterday';
+
+  const diff = differenceInCalendarDays(date, new Date());
+
+  if (diff === 2) return 'in 2 days';
+  if (diff > 2) return `in ${diff} days`;
+  if (diff === -2) return '2 days ago';
+  if (diff < -2) return `${Math.abs(diff)} days ago`;
+
+  return 'unknown';
 }
 
 export function buildPendingCreateFields() {

@@ -1,13 +1,14 @@
 import { store } from "@/store";
 import { Stack } from "expo-router";
-import { Provider as JotaiProvider } from "jotai";
-import { useEffect } from "react";
-import { PaperProvider } from "react-native-paper";
+import { Provider as JotaiProvider, useAtomValue } from "jotai";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, PaperProvider, Portal } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { initLocalDB } from "../db/init";
 import { useProfileSync } from "../hooks/profile";
 import { appTheme } from "../lib/theme";
 import { useNotificationRouting } from "../notifications/listeners";
+import { LoadingProgressAtom } from "../hooks/loadingProgress";
 
 function AppShell() {
   useNotificationRouting();
@@ -22,18 +23,30 @@ function AppShell() {
 }
 
 export default function RootLayout() {
-  useEffect(() => {
-    initLocalDB();
-  }, []);
+  const [dbReady, setDbReady] = useState(false)
+  const loadingProgress = useAtomValue(LoadingProgressAtom)
 
-  useNotificationRouting();
-  useProfileSync();
+  useEffect(() => {
+  let mounted = true;
+
+  const init = async () => {
+    await initLocalDB();
+    if (mounted) setDbReady(true);
+  };
+
+  init();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
   return (
     <JotaiProvider store={store}>
       <PaperProvider theme={appTheme}>
-        <AppShell />
+        {dbReady && <AppShell />}
         <Toast position="bottom" />
+        {loadingProgress && <Portal><ActivityIndicator /></Portal>}
       </PaperProvider>
     </JotaiProvider>
   );

@@ -1,5 +1,4 @@
 import {
-  getPatientSettingsByIdSafe,
   getPatientSettingsOfPatient,
   PatientSettingsRow,
   upsertPatientSettings,
@@ -8,8 +7,8 @@ import { createBasicPatientSettings, getErrorMessage } from "@/src/repos/utils";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import Toast from "react-native-toast-message";
-import { SyncStateAtom } from "./sync";
 import { UserProfileAtom } from "./profile";
+import { SyncStateAtom } from "./sync";
 
 export const PatientSettingsAtom = atom<PatientSettingsRow | null>(null);
 
@@ -33,11 +32,11 @@ export const createAndGetNewPatientSettings = async (
 export const useSyncPatientSettings = () => {
   const syncState = useAtomValue(SyncStateAtom);
   const setSettings = useSetAtom(PatientSettingsAtom);
-  const profile = useAtomValue(UserProfileAtom)
+  const profile = useAtomValue(UserProfileAtom);
 
   useEffect(() => {
     const fetchSettings = async (id: string) => {
-      const res = await getPatientSettingsByIdSafe(id);
+      const res = await getPatientSettingsOfPatient(id);
       if (res && !(res instanceof Error)) {
         setSettings(res);
       } else {

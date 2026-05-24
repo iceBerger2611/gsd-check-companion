@@ -8,7 +8,6 @@ const syncWork = async (): Promise<RunSyncResult> => {
   const pushed = await pushPendingChanges();
   const pulled = await pullChanges();
 
-  console.log(pushed, pulled);
   return { pushed, pulled };
 };
 

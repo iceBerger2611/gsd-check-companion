@@ -1,4 +1,5 @@
 import { Register, updateProfileRole } from "@/src/db/authOperations";
+import { useInitState } from "@/src/hooks/initState";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
@@ -11,6 +12,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [role, setRole] = useState<"patient" | "supervisor">("patient");
+  const initState = useInitState();
   const router = useRouter();
 
   const onSignUp = async () => {
@@ -52,10 +54,20 @@ const RegisterPage = () => {
       type: "success",
       text1: `Hi ${registerRes.profile?.display_name || "friend"}, You Have Registered!`,
     });
-    if (role === 'patient') {
-      router.navigate(`/(patient)?id=${registerRes.profile.id}`)
+    const initStateRes = await initState(
+      registerRes.profile.id,
+      registerRes.profile.role === "patient" ? "patient" : "supervisor",
+    );
+    if (!initStateRes.isSuccessful) {
+      Toast.show({
+        type: "error",
+        text1: `an error occured while setting local state: ${initStateRes.error}`,
+      });
+    }
+    if (role === "patient") {
+      router.navigate(`/(patient)?id=${registerRes.profile.id}`);
     } else {
-      router.navigate(`/(supervisor)/dashboard?id=${registerRes.profile.id}`)
+      router.navigate(`/(supervisor)/dashboard?id=${registerRes.profile.id}`);
     }
   };
 

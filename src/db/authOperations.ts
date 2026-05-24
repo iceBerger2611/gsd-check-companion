@@ -3,10 +3,6 @@ import { Session, User } from "@supabase/supabase-js";
 import { identifySupabaseError } from "./utils";
 import { Profile } from "../types/tables.types";
 import supabase from "./supabase";
-import { listSupervisorCareLinks } from "../repos/local/careLinks.repo";
-import { getProfileByIdSafe, ProfileRow } from "../repos/local/profiles.repo";
-import { Database } from "../types/database.types";
-import { upsertReading } from "../repos/local/readings.repo";
 
 interface AuthInRes {
   session: Session | null;
@@ -91,63 +87,6 @@ export const LogIn = async (
     }
 
     return res;
-  } catch (error) {
-    return handleCatch(error);
-  }
-};
-
-export const LinkSupervisorToPatient = async (
-  supervisor_id: string,
-  patient_id: string,
-) => {
-  try {
-    const { status } = await supabase
-      .from("care_links")
-      .insert({ patient_id, supervisor_id, status: "active" });
-    return status;
-  } catch (error) {
-    return handleCatch(error);
-  }
-};
-
-export const GetPatientsOfSupervisor = async (supervisorId: string) => {
-  try {
-    const careLinks = await listSupervisorCareLinks(supervisorId);
-    const results = await Promise.allSettled(
-      Array.from(
-        { length: careLinks.length },
-        (_, index) =>
-          careLinks[index].patientId &&
-          getProfileByIdSafe(careLinks[index].patientId),
-      ),
-    );
-    const patients: ProfileRow[] = [];
-    results.forEach((promise) => {
-      if (promise.status === "fulfilled" && promise.value) {
-        patients.push(promise.value);
-      }
-    });
-    return patients;
-  } catch (error) {
-    return handleCatch(error);
-  }
-};
-
-export const InsertNewReading = async (
-  reading: Database["public"]["Tables"]["readings"]["Insert"],
-) => {
-  try {
-    const { status, data } = await supabase
-      .from("readings")
-      .insert(reading)
-      .single();
-    const res = await supabase
-      .from("readings")
-      .select("*")
-      .eq("id", data?.["id"] as unknown as string)
-      .single();
-    await upsertReading({ ...reading, id: res.data?.id || "new" });
-    return status;
   } catch (error) {
     return handleCatch(error);
   }

@@ -27,7 +27,10 @@ export const runProcessReading = async (
   personalSettings: PatientSettingsRow,
   earlyDecision?: DecisionType,
   sourceFollowUpId?: string,
-): Promise<{ isSuccessful: true } | { isSuccessful: false; error: string }> => {
+): Promise<
+  | { isSuccessful: true; newFollowupId: string; newReadingId: string }
+  | { isSuccessful: false; error: string }
+> => {
   let newFollowupId = Crypto.randomUUID();
   let processStep = 1;
   let currErrorMessage = "";
@@ -48,7 +51,11 @@ export const runProcessReading = async (
     );
 
     if (processResult.isSuccessful) {
-      return { isSuccessful: true };
+      return {
+        isSuccessful: true,
+        newFollowupId: processResult.newFollowupId,
+        newReadingId: processResult.newReadingId,
+      };
     }
 
     setPropertiesForRetry(processResult.failedStep, processResult.error);
@@ -65,7 +72,7 @@ const processReading = async (
   earlyDecision?: DecisionType,
   sourceFollowUpId?: string,
 ): Promise<
-  | { isSuccessful: true }
+  | { isSuccessful: true; newFollowupId: string; newReadingId: string }
   | { isSuccessful: false; error: string; failedStep: number }
 > => {
   if (processStep === 1) {
@@ -155,7 +162,11 @@ const processReading = async (
     if (scheduledNotificationIdsForFollowup.length) {
       await cancelNotificationsOfFollowup(newFollowup.id);
     }
-    return { isSuccessful: true };
+    return {
+      isSuccessful: true,
+      newFollowupId: newFollowup.id,
+      newReadingId: newReadingRow.id,
+    };
   }
 
   if (processStep === 4) {
@@ -217,5 +228,9 @@ const processReading = async (
     }
   }
 
-  return { isSuccessful: true };
+  return {
+    isSuccessful: true,
+    newFollowupId: newFollowup.id,
+    newReadingId: newReadingRow.id,
+  };
 };

@@ -28,7 +28,6 @@ const NumberStep = ({
     <View
       style={{
         gap: 30,
-        justifyContent: "center",
         alignItems: "center",
       }}
     >
@@ -37,7 +36,7 @@ const NumberStep = ({
         inputMode="numeric"
         label="glucose value"
         mode="outlined"
-        style={{ width: "50%", height: "50%" }}
+        style={{ width: "50%", height: "20%" }}
         onChangeText={onGlucoseChange}
         value={currGlucose?.toString() || undefined}
       />

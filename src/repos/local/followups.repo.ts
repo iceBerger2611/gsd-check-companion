@@ -79,7 +79,7 @@ export const getNextPendingFollowup = async (
           eq(followups.status, "pending"),
         ),
       )
-      .orderBy(asc(followups.dueAt))
+      .orderBy(desc(followups.dueAt))
       .limit(1);
     if (!results[0]) {
       throw new NotFoundError(`Followup of patient ${patientId} not found`);

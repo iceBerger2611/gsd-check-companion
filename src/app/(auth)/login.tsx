@@ -1,4 +1,5 @@
 import { LogIn } from "@/src/db/authOperations";
+import { useInitState } from "@/src/hooks/initState";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
@@ -10,6 +11,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState<null | string>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const initState = useInitState();
   const router = useRouter();
 
   const onLogIn = async () => {
@@ -42,10 +44,21 @@ const LoginPage = () => {
       type: "success",
       text1: `Hi ${profile.display_name || "friend"}, You are Logged In!`,
     });
-    if (profile.role === 'patient') {
-      router.navigate(`/(patient)?id=${profile.id}`)
+    const initStateRes = await initState(
+      profile.id,
+      profile.role === "patient" ? "patient" : "supervisor",
+    );
+    if (!initStateRes.isSuccessful) {
+      Toast.show({
+        type: "error",
+        text1: `an error occured while setting local state: ${initStateRes.error}`,
+      });
+      return
+    }
+    if (profile.role === "patient") {
+      router.navigate(`/(patient)?id=${profile.id}`);
     } else {
-      router.navigate(`/(supervisor)/dashboard?id=${profile.id}`)
+      router.navigate(`/(supervisor)/dashboard?id=${profile.id}`);
     }
   };
 

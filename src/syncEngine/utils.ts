@@ -45,7 +45,6 @@ export const readingImmutableFields = [
     equals: (a, b) => a === b,
   },
   { localKey: "id", remoteKey: "id", equals: (a, b) => a === b },
-  { localKey: "note", remoteKey: "note", equals: (a, b) => a === b },
   { localKey: "outcome", remoteKey: "outcome", equals: (a, b) => a === b },
   {
     localKey: "patientId",

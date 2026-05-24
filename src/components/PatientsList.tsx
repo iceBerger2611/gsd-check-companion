@@ -3,9 +3,9 @@ import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { View, ViewStyle } from "react-native";
 import { List, Text } from "react-native-paper";
-import { GetPatientsOfSupervisor } from "../db/authOperations";
 import { UserProfileAtom } from "../hooks/profile";
 import { ProfileRow } from "../repos/local/profiles.repo";
+import { getPatientsOfSupervisor } from "../lib/bootstrap";
 
 const selectedStyle: ViewStyle = {
   borderWidth: 2,
@@ -21,7 +21,7 @@ const PatientsList = () => {
 
   useEffect(() => {
     const fetchPatients = async (supervisorId: string) => {
-      const res = await GetPatientsOfSupervisor(supervisorId);
+      const res = await getPatientsOfSupervisor(supervisorId);
       if (!res || !(res instanceof Error)) {
         setPatients(res);
       }

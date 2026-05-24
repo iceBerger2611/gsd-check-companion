@@ -54,6 +54,9 @@ const CornPhotoStep = ({
       <Text variant="headlineSmall">
         Take a Photo of Your Cornstarch
       </Text>
+      <Text>
+        This helps keep a visual record of the action.
+      </Text>
       <View
         style={{
           display: "flex",

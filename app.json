@@ -8,6 +8,11 @@
     "scheme": "gsdcheckcompanion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "router": {
+        "root": "./src/app"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },

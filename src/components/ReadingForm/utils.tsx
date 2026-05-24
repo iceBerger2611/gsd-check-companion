@@ -1,8 +1,10 @@
-
+import { DecisionType, FollowupType, Intervention } from "@/src/db/schema";
+import supabase from "@/src/db/supabase";
+import { ReadingInsert } from "@/src/repos/local/readings.repo";
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
 import { View } from "react-native";
-import { Button } from "react-native-paper";
+import { Button, Text } from "react-native-paper";
 import Animated, {
   LightSpeedInLeft,
   LightSpeedOutRight,
@@ -12,9 +14,6 @@ import CornPhotoStep from "./CornPhotoStep";
 import EarlyDecisionStep from "./EarlyDecisionStep";
 import MeterPhotoStep from "./MeterPhotoStep";
 import NumberStep from "./NumberStep";
-import { DecisionType, FollowupType, Intervention } from "@/src/db/schema";
-import { ReadingInsert } from "@/src/repos/local/readings.repo";
-import supabase from "@/src/db/supabase";
 
 export type StepFuncProps = {
   followup: FollowupType;
@@ -86,12 +85,8 @@ export const getDecisionOptions = (
   }[] = [];
   decisionOptions.push(createValueLabel("consume_glucose"));
   decisionOptions.push(createValueLabel("eat_immediately"));
-  if (followup === "recheck") {
-    decisionOptions.push(createValueLabel("drink_cornstarch"));
-  }
-  if (followup === "drink_cornstarch") {
-    decisionOptions.push(createValueLabel("recheck"));
-  }
+  decisionOptions.push(createValueLabel("drink_cornstarch"));
+  decisionOptions.push(createValueLabel("recheck"));
 
   return decisionOptions;
 };
@@ -135,17 +130,21 @@ export const getSteps = (
 ): StepFunc[] => {
   const stepfunctions: StepFunc[] = [];
 
-  const layoutSteps: StepFunc[] = [
-    MeterPhotoStep,
-    CornPhotoStep,
-    EarlyDecisionStep,
+  const layoutSteps: { step: StepFunc; description: string }[] = [
+    { step: MeterPhotoStep, description: "Photo of meter" },
+    { step: CornPhotoStep, description: "Photo of cornstarch" },
+    { step: EarlyDecisionStep, description: "Change next action? (optional)" },
   ];
 
-  if (followup === "recheck") layoutSteps.unshift(NumberStep);
+  if (followup === "recheck")
+    layoutSteps.unshift({ step: NumberStep, description: "Enter reading" });
 
   const amountOfSteps = layoutSteps.length;
 
-  layoutSteps.forEach((Step, index) => {
+  layoutSteps.forEach((layoutStep, index) => {
+    const Step = layoutStep.step;
+    const description = layoutStep.description;
+
     const view = ({
       reading,
       setReading,
@@ -168,10 +167,13 @@ export const getSteps = (
             borderStyle: "solid",
             borderRadius: 8,
             height: "60%",
-            gap: 50,
+            gap: 5,
             padding: 24,
           }}
         >
+          <Text>
+            step {currStep} of {amountOfSteps} - {description}
+          </Text>
           <Step
             earlyDecision={earlyDecision}
             followup={followup}

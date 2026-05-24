@@ -303,6 +303,7 @@ export const shouldFollowupHaveNotifications = (followup: FollowupRow): boolean 
     followup.patientId &&
     followup.readingId &&
     !followup.completedAt &&
+    followup.status === 'pending' &&
     followup.dueAt &&
     new Date(followup.dueAt) > new Date()
   );

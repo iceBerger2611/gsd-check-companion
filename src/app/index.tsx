@@ -6,7 +6,7 @@ import { Text } from "react-native-paper";
 import { UserProfileAtom } from "../hooks/profile";
 import { PatientSettingsAtom } from "../hooks/settings";
 import { CurrentPatientAtom } from "../hooks/supervisorPatient";
-import { bootstrapAppSession } from "../lib/bootstrap";
+import { bootstrapApp } from "../lib/bootstrap";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
@@ -25,7 +25,7 @@ export default function Index() {
 
   useEffect(() => {
     const handleEntry = async () => {
-      await bootstrapAppSession(
+      await bootstrapApp(
         router,
         setProfile,
         setPatientSettings,

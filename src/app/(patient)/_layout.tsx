@@ -100,6 +100,7 @@ export default function RootLayout() {
     <Stack screenOptions={{ header: (props) => <PatientHeader {...props} /> }}>
       <Stack.Screen name="log" options={{ headerShown: false }} />
       <Stack.Screen name="settings" options={{ headerBackVisible: true }} />
+      <Stack.Screen name="readingOutcome" options={{ headerShown: false }} />
     </Stack>
   );
 }

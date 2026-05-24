@@ -200,7 +200,7 @@ export const pushPendingRows = async <
           // and persist that canonical version locally.
           const pipelineResult = await mergeAndUpsertFromLocalPipeline({
             getRemoteRowByIdSafe,
-            localRow,
+            localRow: verdict.row,
             mapLocalRowToRemote,
             mapRemoteRowToLocal,
             markRowFailed,

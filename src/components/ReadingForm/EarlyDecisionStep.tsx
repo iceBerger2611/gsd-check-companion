@@ -1,5 +1,13 @@
 import { DecisionType, FollowupType, Intervention } from "@/src/db/schema";
-import { useState } from "react";
+import { UserProfileAtom } from "@/src/hooks/profile";
+import { PatientSettingsAtom } from "@/src/hooks/settings";
+import { evaluateReading, ReadingPlan } from "@/src/processReading/utils";
+import {
+  listThresholdRulesByPatient,
+  ThresholdRuleRow,
+} from "@/src/repos/local/thresholdRules.repo";
+import { useAtomValue } from "jotai";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Button, SegmentedButtons, Text, TextInput } from "react-native-paper";
 import { createValueLabel, getDecisionOptions, StepFuncProps } from "./utils";
@@ -10,9 +18,13 @@ const EarlyDecisionStep = ({
   setEarlyDecision,
   earlyDecision,
 }: StepFuncProps) => {
-  const [currMinutes, setCurrMinutes] = useState<number | null>(
-    reading.glucoseValue ?? null,
-  );
+  const patient = useAtomValue(UserProfileAtom);
+  const settings = useAtomValue(PatientSettingsAtom);
+  const [patientThresholds, setPatientThresholds] = useState<
+    ThresholdRuleRow[] | null
+  >(null);
+  const [readingPlan, setReadingPlan] = useState<ReadingPlan | null>(null);
+  const [currMinutes, setCurrMinutes] = useState<number | null>(0);
 
   const [decisionActionType, setDecisionActionType] = useState<
     Intervention | FollowupType | null
@@ -24,28 +36,78 @@ const EarlyDecisionStep = ({
         : earlyDecision.intervention,
   );
 
+  useEffect(() => {
+    const fetchThresholds = async (patientId: string) => {
+      const thresholds = await listThresholdRulesByPatient(patientId);
+      if (!thresholds[0]) {
+        return setPatientThresholds(null);
+      } else {
+        setPatientThresholds(thresholds);
+      }
+      return thresholds;
+    };
+
+    if (patient?.id) {
+      fetchThresholds(patient.id);
+    }
+  }, [patient?.id]);
+
+  useEffect(() => {
+    if (patient?.id && patientThresholds?.length && settings && !readingPlan) {
+      const newReadingPlan = evaluateReading(
+        reading,
+        patientThresholds,
+        settings,
+      );
+      setReadingPlan(newReadingPlan);
+    }
+  }, [patient?.id, patientThresholds, reading, readingPlan, settings]);
+
   const decisionOptions = getDecisionOptions(followup);
 
-  const onMinutesChange = (minutesValue: string) => {
-    setCurrMinutes(Number(minutesValue));
-  };
+  const calculateAndSetEarlyDecision = ({ actionType, minutes }: {
+    actionType?: Intervention | FollowupType,
+    minutes?: number,
+  }) => {
+    const decisionString = actionType ?? decisionActionType;
+    const decisionMinutes = minutes ?? currMinutes;
 
-  const onAgree = () => {
     const interventionDecision: DecisionType = {
       type: "intervention",
-      intervention: decisionActionType as Intervention,
+      intervention: decisionString as Intervention,
     };
     const followupDecision: DecisionType = {
       type: "followup",
-      followupType: decisionActionType as FollowupType,
-      followupDelay: decisionActionType === 'drink_cornstarch' ? 180 : currMinutes || 0,
+      followupType: decisionString as FollowupType,
+      followupDelay: decisionMinutes || 0,
     };
     setEarlyDecision(
-      decisionActionType === "recheck" ||
-        decisionActionType === "drink_cornstarch"
+      decisionString === "recheck" || decisionString === "drink_cornstarch"
         ? followupDecision
         : interventionDecision,
     );
+  };
+
+  const onMinutesChange = (minutesValue: string) => {
+    setCurrMinutes(Number(minutesValue));
+    calculateAndSetEarlyDecision({ minutes: Number(minutesValue) });
+  };
+
+  const onDecisionChange = (
+    value:
+      | "recheck"
+      | "drink_cornstarch"
+      | "eat_immediately"
+      | "consume_glucose",
+  ) => {
+    setDecisionActionType(value);
+    calculateAndSetEarlyDecision({ actionType: value });
+  };
+
+  const onCancel = () => {
+    setCurrMinutes(0);
+    setDecisionActionType(null);
+    setEarlyDecision(null);
   };
 
   return (
@@ -56,23 +118,45 @@ const EarlyDecisionStep = ({
       }}
     >
       <Text variant="headlineSmall" style={{ alignContent: "space-between" }}>
-        Would you like to:
+        Do you want to change the next action?
+      </Text>
+      <Text>
+        This will be used instead of what the system calculates for you
       </Text>
       <SegmentedButtons
         buttons={decisionOptions}
         value={followup}
-        onValueChange={(value) => setDecisionActionType(value)}
+        onValueChange={onDecisionChange}
       />
-      {decisionActionType === "recheck" && (
-        <TextInput
-          inputMode="numeric"
-          label="minutes"
-          mode="outlined"
-          onChangeText={onMinutesChange}
-          value={currMinutes?.toString() || undefined}
-        />
+      <TextInput
+        inputMode="numeric"
+        label="minutes"
+        mode="outlined"
+        onChangeText={onMinutesChange}
+        value={currMinutes?.toString() || undefined}
+      />
+      {readingPlan && (
+        <>
+          <Text>
+            Expected by system:{" "}
+            {
+              createValueLabel(
+                readingPlan.immediateIntervention ||
+                  readingPlan.nexFollowup.type,
+              ).label
+            }{" "}
+            {readingPlan.immediateIntervention &&
+              `and ${readingPlan.immediateIntervention === "consume_glucose" ? "check" : "drink cornstarch"} `}
+            in {readingPlan.nexFollowup.delayMinutes} minutes
+          </Text>
+          {decisionActionType && currMinutes && (
+            <Text>
+              Your choice: {createValueLabel(decisionActionType).label} in{" "}
+              {currMinutes} minutes
+            </Text>
+          )}
+        </>
       )}
-      <Text variant="headlineSmall">instead?</Text>
       <View
         style={{
           display: "flex",
@@ -81,23 +165,10 @@ const EarlyDecisionStep = ({
           justifyContent: "space-evenly",
         }}
       >
-        <Button uppercase onPress={onAgree} mode="outlined">
-          YES
-        </Button>
-        <Button
-          uppercase
-          onPress={() => setEarlyDecision(null)}
-          mode="outlined"
-        >
-          NO
+        <Button uppercase onPress={onCancel} mode="outlined">
+          <Text>CANCEL DECISION</Text>
         </Button>
       </View>
-      <Text>
-        Current Decision:{" "}
-        {!decisionActionType
-          ? "none"
-          : createValueLabel(decisionActionType).label}
-      </Text>
     </View>
   );
 };

@@ -1,10 +1,13 @@
+import { ReadingOutcomeProps } from "@/src/app/(patient)/readingOutcome";
 import { DecisionType, FollowupType } from "@/src/db/schema";
+import { LoadingProgressAtom } from "@/src/hooks/loadingProgress";
 import { PatientSettingsAtom } from "@/src/hooks/settings";
 import { runProcessReading } from "@/src/processReading/processReadingService";
 import { ReadingInsert } from "@/src/repos/local/readings.repo";
+import { runSync } from "@/src/syncEngine/syncService";
 import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -41,6 +44,7 @@ const ReadingForm = ({
   const router = useRouter();
 
   const settings = useAtomValue(PatientSettingsAtom);
+  const setLoadingProgress = useSetAtom(LoadingProgressAtom);
 
   useEffect(() => {
     photoUriRef.current = photoUri;
@@ -66,15 +70,17 @@ const ReadingForm = ({
 
       if (!settings) return;
 
+      setLoadingProgress({ loadingText: "saving reading locally..." });
       const res = await runProcessReading(
         reading,
         settings,
         latestEarlyDecision,
         sourceFollowupId,
       );
+      setLoadingProgress(null);
       Toast.show({
         type: !res.isSuccessful ? "error" : "success",
-        text1: !res.isSuccessful ? res.error : "Reading Saved",
+        text1: !res.isSuccessful ? res.error : "Reading Saved Locally",
       });
 
       if (
@@ -95,10 +101,23 @@ const ReadingForm = ({
       ) {
         await uploadURIToSupabase(latestPhotoUri.meter, reading.meterPhotoUrl);
       }
+      if (!res.isSuccessful) return;
 
-      router.navigate("/(patient)");
+      const newRouteParams: ReadingOutcomeProps = {
+        newFollowupId: res.newFollowupId,
+        newReadingId: res.newReadingId,
+      };
+
+      setLoadingProgress({ loadingText: "syncing data..." });
+      await runSync();
+      setLoadingProgress(null);
+
+      router.push({
+        pathname: "/readingOutcome",
+        params: newRouteParams,
+      });
     },
-    [followup, router, sourceFollowupId, settings],
+    [followup, settings, setLoadingProgress, sourceFollowupId, router],
   );
 
   const steps = useMemo(

@@ -1,16 +1,43 @@
 import { Router } from "expo-router";
 import Toast from "react-native-toast-message";
-import { GetPatientsOfSupervisor } from "../db/authOperations";
 import { NotFoundError } from "../db/errors";
 import supabase from "../db/supabase";
 import { createAndGetNewPatientSettings } from "../hooks/settings";
+import { listSupervisorCareLinks } from "../repos/local/careLinks.repo";
 import {
-  getPatientSettingsById,
+  getPatientSettingsOfPatient,
   PatientSettingsRow,
 } from "../repos/local/patientSettings.repo";
-import { getProfileById, ProfileRow } from "../repos/local/profiles.repo";
+import {
+  getProfileById,
+  getProfileByIdSafe,
+  ProfileRow,
+} from "../repos/local/profiles.repo";
 import { getErrorMessage } from "../repos/utils";
 import { runSync } from "../syncEngine/syncService";
+
+export const getPatientsOfSupervisor = async (supervisorId: string) => {
+  try {
+    const careLinks = await listSupervisorCareLinks(supervisorId);
+    const results = await Promise.allSettled(
+      Array.from(
+        { length: careLinks.length },
+        (_, index) =>
+          careLinks[index].patientId &&
+          getProfileByIdSafe(careLinks[index].patientId),
+      ),
+    );
+    const patients: ProfileRow[] = [];
+    results.forEach((promise) => {
+      if (promise.status === "fulfilled" && promise.value) {
+        patients.push(promise.value);
+      }
+    });
+    return patients;
+  } catch (error) {
+    return error as Error;
+  }
+};
 
 export const bootstrapAppSession = async (
   setUserProfile: (profile: ProfileRow | null) => void,
@@ -22,7 +49,6 @@ export const bootstrapAppSession = async (
   const id = data.session?.user.id;
   if (id) {
     try {
-      await getProfileById(id);
       await runSync();
       const refreshed = await getProfileById(id);
       setUserProfile(refreshed);
@@ -43,7 +69,7 @@ export const bootstrapSupervisor = async (
   | { isSuccessful: false; error: string }
 > => {
   try {
-    const res = await GetPatientsOfSupervisor(profileId);
+    const res = await getPatientsOfSupervisor(profileId);
     if (res instanceof Error) throw res;
     if (!res.length) {
       setCurrentPatient(null);
@@ -64,7 +90,7 @@ export const bootstrapPatient = async (
   | { isSuccessful: false; error: string }
 > => {
   try {
-    const patientSettingsRes = await getPatientSettingsById(profileId);
+    const patientSettingsRes = await getPatientSettingsOfPatient(profileId);
     setPatientSettings(patientSettingsRes);
     return { isSuccessful: true, patientSettings: patientSettingsRes };
   } catch (error) {
